@@ -1,0 +1,10 @@
+.ipynb_checkpoints
+__pycache__
+
+# data
+DeepScoresDataset.tar.gz
+ds2_dense
+music-multi
+Music-Sheet-Partition-4
+sheets
+model
