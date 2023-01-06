@@ -43,96 +43,6 @@ class Label:
         ]
         return Label(self.name, box)
 
-pitchMap = [
-"A0",
-"Bb0",
-"B0",
-"C1",
-"Db1",
-"D1",
-"Eb1",
-"E1",
-"F1",
-"Gb1",
-"G1",
-"Ab1",
-"A1",
-"Bb1",
-"B1",
-"C2",
-"Db2",
-"D2",
-"Eb2",
-"E2",
-"F2",
-"Gb2",
-"G2",
-"A2",
-"Ab2",
-"Bb2",
-"B2",
-"C3",
-"Db3",
-"D3",
-"Eb3",
-"E3",
-"F3",
-"Gb3",
-"G3",
-"Ab3",
-"A3", #36
-"Bb3",
-"B3",
-"C4",
-"Db4",
-"D4",
-"Eb4",
-"E4",
-"F4",
-"Gb4",
-"G4",
-"Ab4",
-"A4",
-"Bb4",
-"B4",
-"C5",
-"Db5",
-"D5",
-"Eb5",
-"E5",
-"F5",
-"Gb5",
-"G5",
-"Ab5",
-"A5",
-"Bb5",
-"B5",
-"C6",
-"Db6",
-"D6",
-"Eb6",
-"E6",
-"F6",
-"Gb6",
-"G6",
-"Ab6",
-"A6",
-"Bb6",
-"B6",
-"C7",
-"Db7",
-"D7",
-"Eb7",
-"E7",
-"F7",
-"Gb7",
-"G7",
-"Ab7",
-"A7",
-"Bb7",
-"B7",
-]
-
 class Note(music.Note):
     def _rel_position(self, notehead: Label):
         note_center = (notehead.y_min() + notehead.y_max()) / 2
@@ -147,16 +57,16 @@ class Note(music.Note):
 
     def _get_semitone(self, notehead: Label):
         rel_position = self._rel_position(notehead)
-        # offset rel_position to number of lines from A3 (tuned at 440Hz)
+        # offset rel_position to number of lines from A4 (tuned at 440Hz)
         match self.clef.name:
             case 'clefG': # treble clef
-                rel_position += 8
+                rel_position += 1
             case 'clefCAlto':
-                rel_position += 2
+                rel_position -= 5
             case 'clefCTenor':
-                rel_position += 0
+                rel_position -= 7
             case 'clefF': # base clef
-                rel_position -= 4
+                rel_position -= 11
         
         # find number of half tones
         semitones = np.floor_divide(rel_position, 7) * 12
@@ -202,7 +112,7 @@ class Note(music.Note):
                 break
 
             semitone = self._get_semitone(note)
-            self.pitches.append(pitchMap[semitone + 36])
+            self.pitches.append(semitone)
 
     def _get_duration(self):
         note = self.notes[0]
@@ -401,10 +311,7 @@ def main():
     plt.imshow(image)
     plt.savefig("img.png", dpi=800)
 
-    # print("playing music")
-
     import player
-    import time
     
     m = music.Music()
     m.time = 32
