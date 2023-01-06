@@ -1,6 +1,6 @@
 class Note:
     def __init__(self, pitches = None, duration = None):
-        self.pitches: list = pitches
+        self.pitches: list[int] = pitches
         self.duration: int = duration
     
     def add_pitch(self, pitch):
