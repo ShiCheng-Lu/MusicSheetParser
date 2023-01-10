@@ -2,49 +2,8 @@ import numpy as np
 import re
 import music
 
-class Label:
-    def __init__(self, name, box):
-        self.name = name
-        self.box = box
-    
-    def __repr__(self):
-        return f"{self.name}"
-
-    def x_min(self):
-        return self.box[0]
-    
-    def x_max(self):
-        return self.box[2]
-    
-    def y_min(self):
-        return self.box[1]
-    
-    def y_max(self):
-        return self.box[3]
-
-    def area(self):
-        return (self.x_max() - self.x_min()) * (self.y_max() - self.y_min())
-
-    def intersect(self, other):
-        box = [
-            max(self.x_min(), other.x_min()),
-            max(self.y_min(), other.y_min()),
-            min(self.x_max(), other.x_max()),
-            min(self.x_max(), other.x_max()),
-        ]
-        return Label(self.name, box)
-
-    def union(self, other):
-        box = [
-            min(self.x_min(), other.x_min()),
-            min(self.y_min(), other.y_min()),
-            max(self.x_max(), other.x_max()),
-            max(self.x_max(), other.x_max()),
-        ]
-        return Label(self.name, box)
-
 class Note(music.Note):
-    def _rel_position(self, notehead: Label):
+    def _rel_position(self, notehead: music.Label):
         note_center = (notehead.y_min() + notehead.y_max()) / 2
 
         # use whether note in inspace to more accurately determine relative position
@@ -55,7 +14,7 @@ class Note(music.Note):
         
         return int(rel_position)
 
-    def _get_semitone(self, notehead: Label):
+    def _get_semitone(self, notehead: music.Label):
         rel_position = self._rel_position(notehead)
         # offset rel_position to number of lines from A4 (tuned at 440Hz)
         match self.clef.name:
@@ -137,20 +96,20 @@ class Note(music.Note):
         augmentation = sum(mod.name == "augmentationdot" for mod in self.modifiers)
         self.duration = int(self.duration * (2 - (1 / 2) ** augmentation) * 64)
 
-    def __init__(self, staff: Label, clef: Label):
+    def __init__(self, staff: music.Label, clef: music.Label):
         self.staff = staff
         self.clef = clef
-        self.notes: list[Label] = []
+        self.notes: list[music.Label] = []
 
-        self.modifiers: list[Label] = []
+        self.modifiers: list[music.Label] = []
         self.pitches = []
     
-    def addNote(self, note: Label):
+    def addNote(self, note: music.Label):
         self.notes.append(note)
         return self
 
     def modify(self, labels):
-        if type(labels) is Label:
+        if type(labels) is music.Label:
             labels = [labels]
 
         self.modifiers.extend(labels)
@@ -169,7 +128,7 @@ class Note(music.Note):
         return f"{self.pitches} {self.duration}"
 
 class MusicParser:
-    def __init__(self, labels: list[Label]):
+    def __init__(self, labels: list[music.Label]):
         self.labels = labels
         
         self._pre_process()
@@ -177,7 +136,7 @@ class MusicParser:
         self._process_labels()
 
     def _pre_process(self):
-        self.staffs: list[Label] = []
+        self.staffs: list[music.Label] = []
         for label in self.labels:
             if label.name == 'staff':
                 self.staffs.append(label)
@@ -193,7 +152,7 @@ class MusicParser:
                 label.box[0] += size_offset
                 label.box[2] += size_offset
 
-        self.staffs.sort(key=Label.y_min)
+        self.staffs.sort(key=music.Label.y_min)
     
     def _split_labels_by_staffs(self):
         cutoffs = list(map(lambda a, b : (a.y_max() + b.y_min()) / 2, self.staffs[:-1], self.staffs[1:]))
@@ -215,9 +174,9 @@ class MusicParser:
             notes = self._process_staff(staff, staff_labels)
             self.notes.append(notes)
     
-    def _process_staff(self, staff: Label, staff_labels: list[Label]) -> list[Note]:
-        min_sorted = iter(sorted(staff_labels, key=Label.x_min)) # sort by x_min
-        max_sorted = iter(sorted(staff_labels, key=Label.x_max)) # sort by x_max
+    def _process_staff(self, staff: music.Label, staff_labels: list[music.Label]) -> list[Note]:
+        min_sorted = iter(sorted(staff_labels, key=music.Label.x_min)) # sort by x_min
+        max_sorted = iter(sorted(staff_labels, key=music.Label.x_max)) # sort by x_max
 
         min_item = next(min_sorted, None)
         max_item = next(max_sorted, None)
@@ -299,7 +258,7 @@ def main():
     def toLabelList(list):
         labels = []
         for item in list:
-            labels.append(Label(
+            labels.append(music.Label(
                 data.get_category(item['cat_id'][0])['name'],
                 item['a_bbox']
             ))
