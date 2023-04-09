@@ -4,9 +4,11 @@ import music
 import math
 
 class Label:
-    def __init__(self, bbox, name):
-        self.bbox = bbox
-        self.name = name
+    def __init__(self, bbox=None, name=None, confidence=None, on_edge=False):
+        self.bbox: list[float] = bbox
+        self.name: str = name
+        self.confidence: float = confidence
+        self.on_edge: bool = on_edge
     
     def x_min(self):
         return self.bbox[0]
@@ -20,17 +22,40 @@ class Label:
     def y_max(self):
         return self.bbox[3]
     
-    def intersects(self, other):
+    def intersects(self, other) -> bool:
         return (self.x_max() >= other.x_min() and
                 self.x_min() <= other.x_max() and
                 self.y_max() >= other.y_min() and
                 self.y_min() <= other.y_max())
+    
+    def intersection(self, other, result=None):
+        if result == None:
+            result = self
+        elif self.confidence > other.confidence:
+            result.name = self.name
+            result.confidence = self.confidence
+        else:
+            result.name = other.name
+            result.confidence = other.confidence
+        
+        result.bbox = [
+            max(self.x_min(), other.x_min()),
+            max(self.y_min(), other.y_min()),
+            min(self.x_max(), other.x_max()),
+            min(self.y_max(), other.y_max()),
+        ]
+        return result
+
 
     def union(self, other, result=None):
         if result == None:
             result = self
-        elif self.name == other.name:
+        elif self.confidence > other.confidence:
             result.name = self.name
+            result.confidence = self.confidence
+        else:
+            result.name = other.name
+            result.confidence = other.confidence
 
         result.bbox = [
             min(self.x_min(), other.x_min()),
@@ -39,7 +64,17 @@ class Label:
             max(self.y_max(), other.y_max()),
         ]
         return result
-
+    
+    def copy(self, other=None):
+        if other == None:
+            other = Label(None, None, None)
+        other.bbox = self.bbox.copy()
+        other.name = self.name
+        other.confidence = self.confidence
+    
+    def area(self):
+        return (self.x_max() - self.x_min()) * (self.y_max() - self.y_min())
+    
     def __repr__(self):
         return f"{self.name}"
 
@@ -146,8 +181,8 @@ class Note(music.Note):
             beam_count = sum('beam' == mod.name for mod in self.modifiers)
             self.duration = 1 / (2 ** (beam_count + 2))
 
-        augmentation = sum(mod.name == "augmentationdot" for mod in self.modifiers)
-        self.duration = self.duration * (2 - (1 / 2) ** augmentation)
+        # augmentation = sum(mod.name == "augmentationdot" for mod in self.modifiers)
+        # self.duration = self.duration * (2 - (1 / 2) ** augmentation)
 
     def __init__(self, label: Label, clef: Label, staff: Label):
         self.label = label
@@ -169,14 +204,21 @@ class Note(music.Note):
         return self
     
     def complete(self):
-        # process order is important
         self._get_pitch()
-        self._get_duration()
 
         return self
 
     def __repr__(self):
         return f"{'rest' if self.pitch == None else pitchMap[self.pitch]} {self.duration} {self.start_time}"
+
+class NoteGroup:
+    def __init__(self, note: Note):
+        self.bbox: Label = note.label.copy()
+        self.notes: list[Note] = []
+    
+    def add(self, note: Note):
+        self.bbox.union(note.label)
+        self.notes.append(note)
 
 class MusicParser:
     def __init__(self, labels: list[Label]):
@@ -228,6 +270,10 @@ class MusicParser:
         self.staff_labels = [[] for _ in self.staffs]
 
         for label in self.labels:
+            # REMOVE: for testing only, TODO need to figure out a way to limit bad labels from sheet title
+            if label.y_max() < 500:
+                continue
+
             for staff_idx, y in enumerate(cutoffs):
                 if label.y_min() < y:
                     self.staff_labels[staff_idx].append(label)
@@ -274,7 +320,7 @@ class MusicParser:
             label = next(mods_iterator, None)
 
         while label != None:
-            # apply mod to notes that intersect
+            # apply mod to notes that intersect with it
             for note in notes:
                 if label.intersects(note.label):
                     note.modify(label)
@@ -316,7 +362,7 @@ class MusicParser:
 def main():
     import json
 
-    with open(f"nggup.json") as f:
+    with open(f"nggup2.json") as f:
         labels = json.load(f)
     
     labels = [Label(x['bbox'], x['name']) for x in labels]
