@@ -27,44 +27,29 @@ class PianoPlayer:
             note = file.split(".")[0]
             self.notes[note] = pygame.mixer.Sound(f"{dir}/{file}")
 
-    def playNote(self, note: Note, duration: int):
-        for pitch in note.pitches:
-            name = pitchMap[pitch]
-            self.notes[name].play(0, duration)
+    def playNote(self, note: Note, bpm: int):
+        if note.pitch == None: # rest
+            return
+        self.notes[pitchMap[note.pitch]].play(0, int(note.duration * 1000 / bpm))
 
     def play(self, music: Music):
-        trackCount = len(music.tracks)
+        current_time = 0
+        
+        notes = sorted(music.notes, key=lambda note: note.start_time)
 
-        print(trackCount)
-
-        nextNoteTime = [0] * trackCount
-        noteIndexes = [0] * trackCount
-
-        while any([not math.isinf(x) for x in nextNoteTime]):
-            for i in range(trackCount):
-                if nextNoteTime[i] == 0:
-                    try:
-                        note = music.tracks[i][noteIndexes[i]]
-                        self.playNote(note, note.duration * music.time)
-                        nextNoteTime[i] = note.duration
-                        noteIndexes[i] += 1
-                    except IndexError:
-                        print("baf")
-                        nextNoteTime[i] = math.inf
-
-            timeStep = min(nextNoteTime)
-            for i in range(trackCount):
-                nextNoteTime[i] -= timeStep
-
-            time.sleep(timeStep / 1000 * music.time)
+        for note in notes:
+            if note.start_time > current_time:
+                time.sleep((note.start_time - current_time) / music.bpm)
+                current_time = note.start_time
+            self.playNote(note, music.bpm)
 
 def main():
     # test, play some notes
     player = PianoPlayer()
 
     m = Music()
-    m.time = 64
-    m.tracks = [[Note([i], 8) for i in range(-48, 39)]]
+    m.bpm = 32
+    m.notes = [Note(i, 1, (i + 50) * 8) for i in range(-48, 39)]
     player.play(m)
 
 if __name__ == "__main__":

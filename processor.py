@@ -1,9 +1,62 @@
 import numpy as np
 import re
 import music
+import math
+
+class Label:
+    def __init__(self, bbox, name):
+        self.bbox = bbox
+        self.name = name
+    
+    def x_min(self):
+        return self.bbox[0]
+    
+    def y_min(self):
+        return self.bbox[1]
+    
+    def x_max(self):
+        return self.bbox[2]
+    
+    def y_max(self):
+        return self.bbox[3]
+    
+    def intersects(self, other):
+        return (self.x_max() >= other.x_min() and
+                self.x_min() <= other.x_max() and
+                self.y_max() >= other.y_min() and
+                self.y_min() <= other.y_max())
+
+    def union(self, other, result=None):
+        if result == None:
+            result = self
+        elif self.name == other.name:
+            result.name = self.name
+
+        result.bbox = [
+            min(self.x_min(), other.x_min()),
+            min(self.y_min(), other.y_min()),
+            max(self.x_max(), other.x_max()),
+            max(self.y_max(), other.y_max()),
+        ]
+        return result
+
+    def __repr__(self):
+        return f"{self.name}"
+
+pitchMap = [ # range: -48 to +39
+    "A4", "Bb4", "B4", "C5", "Db5", "D5", "Eb5", "E5", "F5", "Gb5", "G5", "Ab5",
+    "A5", "Bb5", "B5", "C6", "Db6", "D6", "Eb6", "E6", "F6", "Gb6", "G6", "Ab6",
+    "A6", "Bb6", "B6", "C7", "Db7", "D7", "Eb7", "E7", "F7", "Gb7", "G7", "Ab7",
+    "A7", "Bb7", "B7", # missing high C8 on standard piano
+    # indexed negatively, these are lower than A4
+    "A0", "Bb0", "B0", "C1", "Db1", "D1", "Eb1", "E1", "F1", "Gb1", "G1", "Ab1",
+    "A1", "Bb1", "B1", "C2", "Db2", "D2", "Eb2", "E2", "F2", "Gb2", "G2", "Ab2",
+    "A2", "Bb2", "B2", "C3", "Db3", "D3", "Eb3", "E3", "F3", "Gb3", "G3", "Ab3",
+    "A3", "Bb3", "B3", "C4", "Db4", "D4", "Eb4", "E4", "F4", "Gb4", "G4", "Ab4",
+]
 
 class Note(music.Note):
-    def _rel_position(self, notehead: music.Label):
+    def _rel_position(self, notehead: Label):
         note_center = (notehead.y_min() + notehead.y_max()) / 2
 
         # use whether note in inspace to more accurately determine relative position
@@ -14,7 +67,7 @@ class Note(music.Note):
         
         return int(rel_position)
 
-    def _get_semitone(self, notehead: music.Label):
+    def _get_semitone(self, notehead: Label):
         rel_position = self._rel_position(notehead)
         # offset rel_position to number of lines from A4 (tuned at 440Hz)
         match self.clef.name:
@@ -38,55 +91,55 @@ class Note(music.Note):
             case 5: semitones += 8
             case 6: semitones += 10
 
-        offset = self.staff_offsets[rel_position % 7]
-        # apply any flat/sharp modifiers
-        for modifier in self.modifiers:
-            mod_y = (modifier.y_max() + modifier.y_min()) / 2
-            if 'Flat' in modifier.name:
-                mod_y = (mod_y + modifier.y_max()) / 2
-            if mod_y < notehead.y_min() or mod_y > notehead.y_max() or modifier.x_min() > notehead.x_min():
-                continue
+        # offset = self.staff_offsets[rel_position % 7]
+        # # apply any flat/sharp modifiers
+        # for modifier in self.modifiers:
+        #     mod_y = (modifier.y_max() + modifier.y_min()) / 2
+        #     if 'Flat' in modifier.name:
+        #         mod_y = (mod_y + modifier.y_max()) / 2
+        #     if mod_y < notehead.y_min() or mod_y > notehead.y_max() or modifier.x_min() > notehead.x_min():
+        #         continue
 
-            if 'Natural' in modifier.name:
-                offset = 0
-            elif 'DoubleSharp' in modifier.name:
-                offset = 2
-            elif 'Sharp' in modifier.name:
-                offset = 1
-            elif 'DoubleFlat' in modifier.name:
-                offset = -2
-            elif 'Flat' in modifier.name:
-                offset = -1
-        semitones += offset
+        #     if 'Natural' in modifier.name:
+        #         offset = 0
+        #     elif 'DoubleSharp' in modifier.name:
+        #         offset = 2
+        #     elif 'Sharp' in modifier.name:
+        #         offset = 1
+        #     elif 'DoubleFlat' in modifier.name:
+        #         offset = -2
+        #     elif 'Flat' in modifier.name:
+        #         offset = -1
+        # semitones += offset
         
         return semitones
 
-    def _get_pitches(self):
+    def _get_pitch(self):
+        
+        if 'rest' in self.label.name:
+            return
+
         self.staff_center = (self.staff.y_min() + self.staff.y_max()) / 2
         self.offset_size = (self.staff.y_max() - self.staff.y_min()) / 8
 
-        for note in self.notes:
-            if 'rest' in note.name:
-
-                break
-
-            semitone = self._get_semitone(note)
-            self.pitches.append(semitone)
+        self.pitch = self._get_semitone(self.label)
 
     def _get_duration(self):
-        note = self.notes[0]
-
-        if 'DoubleWhole' in note.name:
+        if 'DoubleWhole' in self.label.name:
             self.duration = 2
-        elif 'Whole' in note.name:
+        elif 'Whole' in self.label.name:
             self.duration = 1
-        elif 'Half' in note.name:
+        elif 'Half' in self.label.name:
             self.duration = 0.5
-        elif 'Quarter' in note.name:
+        elif 'Quarter' in self.label.name:
             self.duration = 0.25
-        elif flag := next((mod for mod in self.modifiers if 'flag' in mod.name), note if 'rest' in note.name else None): 
+        elif 'rest' in self.label.name:
+            num = re.search(r'\d+', self.label.name).group()
+            self.duration = 1 / int(num)
+        elif any('flag' in mod.name for mod in self.modifiers): 
             # noteheadBlack, duration determined by flag
-            num = re.search(r'\d+', flag.name).group()
+            mod: str = next(mod.name for mod in self.modifiers if 'flag' in mod.name)
+            num = re.search(r'\d+', mod).group()
             self.duration = 1 / int(num)
         else: 
             # noteheadBlack, duration determined by beam(s)
@@ -94,22 +147,21 @@ class Note(music.Note):
             self.duration = 1 / (2 ** (beam_count + 2))
 
         augmentation = sum(mod.name == "augmentationdot" for mod in self.modifiers)
-        self.duration = int(self.duration * (2 - (1 / 2) ** augmentation) * 64)
+        self.duration = self.duration * (2 - (1 / 2) ** augmentation)
 
-    def __init__(self, staff: music.Label, clef: music.Label):
-        self.staff = staff
+    def __init__(self, label: Label, clef: Label, staff: Label):
+        self.label = label
+        self.modifiers: list[Label] = []
         self.clef = clef
-        self.notes: list[music.Label] = []
+        self.staff = staff
 
-        self.modifiers: list[music.Label] = []
-        self.pitches = []
-    
-    def addNote(self, note: music.Label):
-        self.notes.append(note)
-        return self
+        self.pitch = None
+        self.duration = None
+        self.start_time = None
+
 
     def modify(self, labels):
-        if type(labels) is music.Label:
+        if type(labels) is Label:
             labels = [labels]
 
         self.modifiers.extend(labels)
@@ -117,45 +169,61 @@ class Note(music.Note):
         return self
     
     def complete(self):
-        self.pitches: list[int] = []
         # process order is important
-        self._get_pitches()
+        self._get_pitch()
         self._get_duration()
 
         return self
 
     def __repr__(self):
-        return f"{self.pitches} {self.duration}"
+        return f"{'rest' if self.pitch == None else pitchMap[self.pitch]} {self.duration} {self.start_time}"
 
 class MusicParser:
-    def __init__(self, labels: list[music.Label]):
+    def __init__(self, labels: list[Label]):
         self.labels = labels
         
         self._pre_process()
         self._split_labels_by_staffs()
         self._process_labels()
+        self._complete_notes()
 
     def _pre_process(self):
-        self.staffs: list[music.Label] = []
+        self.staffs: list[Label] = []
         for label in self.labels:
+            
+            # REMOVE: for testing only, TODO need to figure out a way to limit bad labels from sheet title
+            if label.y_max() < 500:
+                continue
+
             if label.name == 'staff':
-                self.staffs.append(label)
+                # merge any staffs that are intersecting
+                for staff in self.staffs:
+                    if staff.intersects(label):
+                        staff.union(label)
+                        break
+                else:
+                    self.staffs.append(label)
             
             # make noteheads a little larger for better modifier detection
             if 'notehead' in label.name:
                 size_offset = (label.x_max() - label.x_min()) * 0.15 # extend by 15%
-                label.box[0] -= size_offset
-                label.box[2] += size_offset
+                label.bbox[0] -= size_offset
+                label.bbox[2] += size_offset
             
+            # offset accidentals right to overlap them into the note they are modifying
             if 'accidental' in label.name:
                 size_offset = (label.x_max() - label.x_min()) * 0.5
-                label.box[0] += size_offset
-                label.box[2] += size_offset
+                label.bbox[0] += size_offset
+                label.bbox[2] += size_offset
 
-        self.staffs.sort(key=music.Label.y_min)
+        self.staffs.sort(key=Label.y_min)
+
+        for staff in self.staffs:
+            print(staff.bbox, staff.name)
     
     def _split_labels_by_staffs(self):
-        cutoffs = list(map(lambda a, b : (a.y_max() + b.y_min()) / 2, self.staffs[:-1], self.staffs[1:]))
+        cutoffs = [(a.y_max() + b.y_min()) / 2 for a, b in zip(self.staffs[:-1], self.staffs[1:])]
+        cutoffs.append(math.inf)
 
         self.staff_labels = [[] for _ in self.staffs]
 
@@ -164,8 +232,8 @@ class MusicParser:
                 if label.y_min() < y:
                     self.staff_labels[staff_idx].append(label)
                     break
-            else: # last section of staff
-                self.staff_labels[-1].append(label)
+        
+        print("split labels into staffs")
     
     def _process_labels(self):
         self.notes: list[list[Note]] = []
@@ -174,117 +242,102 @@ class MusicParser:
             notes = self._process_staff(staff, staff_labels)
             self.notes.append(notes)
     
-    def _process_staff(self, staff: music.Label, staff_labels: list[music.Label]) -> list[Note]:
-        min_sorted = iter(sorted(staff_labels, key=music.Label.x_min)) # sort by x_min
-        max_sorted = iter(sorted(staff_labels, key=music.Label.x_max)) # sort by x_max
+    def _process_staff(self, staff: Label, staff_labels: list[Label]) -> list[Note]:
+        staff_labels.sort(key=Label.x_min)
 
-        min_item = next(min_sorted, None)
-        max_item = next(max_sorted, None)
+        clef = Label(None, "clefF") # bass clef are hard to detect for some reason, default to base
 
-        modifiers = set()
-        note = None
-        clef = None
-
-        keys = [0] * 7
-
-        notes = []
-
-        while max_item != None:
-            if (min_item != None and min_item.x_min() < max_item.x_max()):
-                if 'notehead' in min_item.name:
-                    if note == None:
-                        note = Note(staff, clef)
-                    note.addNote(min_item)
-                    note.staff_offsets = keys
-                    for mod in modifiers:
-                        note.modify(mod)
-                elif 'rest' in min_item.name:
-                    notes.append(Note(staff, clef).addNote(min_item).complete())
-                elif 'clef' in min_item.name:
-                    clef = min_item
-                elif 'key' in min_item.name:
-                    mod_y = (min_item.y_max() + min_item.y_min()) / 2
-                    if 'Flat' in min_item.name:
-                        mod_y = (mod_y + min_item.y_max()) / 2
-                    
-                    staff_center = (staff.y_min() + staff.y_max()) / 2
-                    offset_size = (staff.y_max() - staff.y_min()) / 8
-
-                    rel_position = np.round((staff_center - mod_y) / offset_size)
-
-                    match clef.name:
-                        case 'clefG': # treble clef
-                            rel_position += 8
-                        case 'clefCAlto':
-                            rel_position += 2
-                        case 'clefCTenor':
-                            rel_position += 0
-                        case 'clefF': # base clef
-                            rel_position -= 4
-                    
-                    keys[int(rel_position % 7)] = -1 if 'Flat' in min_item.name else +1
-
-                elif note != None:
-                    modifiers.add(min_item)
-                    note.modify(min_item)
-                else:
-                    modifiers.add(min_item)
-                
-                min_item = next(min_sorted, None)
+        notes: list[Note] = []
+        mods: list[Label] = []
+        for label in staff_labels:
+            if 'notehead' in label.name:
+                notes.append(Note(label, clef, staff))
+            elif 'rest' in label.name:
+                notes.append(Note(label, clef, staff))
+            elif 'clef' in label.name:
+                clef = label
             else:
-                if 'notehead' in max_item.name and note != None:
-                    note.complete()
-                    notes.append(note)
-                    note = None
-                elif 'key' in max_item.name:
-                    pass
-                elif max_item in modifiers:
-                    modifiers.remove(max_item)
-                
-                max_item = next(max_sorted, None)
+                mods.append(label)
+
+        print(len(notes))
+
+        global_mods = []
+
+        mods_iterator = iter(mods)
+        label = next(mods_iterator, None)
+        while label != None:
+            # pre note modifiers
+            if label.x_max() > notes[0].label.x_min():
+                break
+            global_mods.append(label)
+
+            label = next(mods_iterator, None)
+
+        while label != None:
+            # apply mod to notes that intersect
+            for note in notes:
+                if label.intersects(note.label):
+                    note.modify(label)
+            
+            label = next(mods_iterator, None)
         
         return notes
+    
+    def _complete_notes(self):
+        for notes in self.notes:
+            start_time = 0
+            for note in notes:
+                note.complete()
+                note.start_time = start_time
+                start_time += note.duration
+        
+        self.notes = self.notes[4:]
+
+        start_time = 0
+        end_times = []
+        all_notes = []
+        for index, notes in enumerate(self.notes):
+            print(notes)
+            for note in notes:
+                note.start_time += start_time
+                all_notes.append(note)
+            end_times.append(note.start_time)
+
+            if index % 2 == 1:
+                start_time = max(end_times)
+                end_times = []
+
+        self.notes = all_notes
 
     def __repr__(self) -> str:
         return "\n".join([str(notes) for notes in self.notes])
 
 
 def main():
-    import dataset
-    import matplotlib.pyplot as plt
+    import json
 
-    data = dataset.MusicSheetDataSet("ds2_dense")
+    with open(f"nggup.json") as f:
+        labels = json.load(f)
+    
+    labels = [Label(x['bbox'], x['name']) for x in labels]
 
-    def toLabelList(list):
-        labels = []
-        for item in list:
-            labels.append(music.Label(
-                data.get_category(item['cat_id'][0])['name'],
-                item['a_bbox']
-            ))
-        return labels
+    parser = MusicParser(labels)
 
-    image, labels = data[2]
-    parser = MusicParser(toLabelList(labels))
-
-    plt.imshow(image)
-    plt.savefig("img.png", dpi=800)
+    
 
     import player
     
-    m = music.Music()
-    m.time = 32
-
-    m.tracks = [[], [], [], []]
+    print(parser.notes)
     
-    for i in range(12):
-        m.tracks[i % 4].extend(parser.notes[i])
-
-    # for i in parser.notes:
-    #     print([x.pitches for x in i])
-    #     print(sum([x.duration for x in i]))
-    
-    player.PianoPlayer().play(m)
+    player.PianoPlayer().play(music.Music(parser.notes, 1))
 
 if __name__ == "__main__":
+    
+    # import dataset
+    # import matplotlib.pyplot as plt
+    # data = dataset.MusicSheetDataSet("ds2_dense")
+    # image, label = data[2]
+    # plt.imshow(image)
+    # plt.savefig("img.png", dpi=800)
+
     main()
