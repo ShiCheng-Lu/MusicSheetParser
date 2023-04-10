@@ -2,6 +2,10 @@ import cv2
 from common import Label
 
 def get_staff(file_name, label_name="staff"):
+    '''
+    Get Labels of staffs by using longest black horizontal lines in the image
+    return a list of staff Labels sorted by y value
+    '''
     img = cv2.imread(file_name, cv2.IMREAD_GRAYSCALE)
     width = img.shape[1]
     height = img.shape[0]

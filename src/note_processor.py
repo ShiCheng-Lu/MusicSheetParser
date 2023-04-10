@@ -5,7 +5,7 @@ from common import Label
 
 class Note(music.Note):
     def _rel_position(self, notehead: Label):
-        note_center = (notehead.y_min() + notehead.y_max()) / 2
+        note_center = (notehead.y_min + notehead.y_max) / 2
 
         # use whether note in inspace to more accurately determine relative position
         if 'InSpace' in notehead.name:
@@ -40,13 +40,14 @@ class Note(music.Note):
             case 6: semitones += 10
 
         # offset = self.staff_offsets[rel_position % 7]
+        offset = 0
         # apply any flat/sharp modifiers
-        notehead_size = notehead.y_max() - notehead.y_min()
+        notehead_size = notehead.y_max - notehead.y_min
         for modifier in self.modifiers:
-            mod_y = (modifier.y_max() + modifier.y_min()) / 2
+            mod_y = (modifier.y_max + modifier.y_min) / 2
             if 'Flat' in modifier.name:
-                mod_y = (mod_y + modifier.y_max()) / 2
-            if mod_y < notehead.y_min() + notehead_size / 4 or mod_y > notehead.y_max() - notehead_size / 4:
+                mod_y = (mod_y + modifier.y_max) / 2
+            if mod_y < notehead.y_min + notehead_size / 4 or mod_y > notehead.y_max - notehead_size / 4:
                 continue
 
             if 'Natural' in modifier.name:
@@ -68,8 +69,8 @@ class Note(music.Note):
         if 'rest' in self.label.name:
             return
 
-        self.staff_center = (self.staff.y_min() + self.staff.y_max()) / 2
-        self.offset_size = (self.staff.y_max() - self.staff.y_min()) / 8
+        self.staff_center = (self.staff.y_min + self.staff.y_max) / 2
+        self.offset_size = (self.staff.y_max - self.staff.y_min) / 8
 
         self.pitch = self._get_semitone(self.label)
 

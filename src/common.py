@@ -3,33 +3,30 @@ class Label:
         self.bbox: list[float] = bbox
         self.name: str = name
     
-    def x_min(self):
-        return self.bbox[0]
-    
-    def y_min(self):
-        return self.bbox[1]
-    
-    def x_max(self):
-        return self.bbox[2]
-    
-    def y_max(self):
-        return self.bbox[3]
+    @property
+    def bbox(self):
+        return [self.x_min, self.y_min, self.x_max, self.y_max]
+
+    @bbox.setter
+    def bbox(self, v):
+        if v == None: return
+        self.x_min, self.y_min, self.x_max, self.y_max = v
     
     def intersects(self, other) -> bool:
-        return (self.x_max() >= other.x_min() and
-                self.x_min() <= other.x_max() and
-                self.y_max() >= other.y_min() and
-                self.y_min() <= other.y_max())
+        return (self.x_max >= other.x_min and
+                self.x_min <= other.x_max and
+                self.y_max >= other.y_min and
+                self.y_min <= other.y_max)
     
     def intersection(self, other, result=None):
         if result == None:
             result = self
         
         result.bbox = [
-            max(self.x_min(), other.x_min()),
-            max(self.y_min(), other.y_min()),
-            min(self.x_max(), other.x_max()),
-            min(self.y_max(), other.y_max()),
+            max(self.x_min, other.x_min),
+            max(self.y_min, other.y_min),
+            min(self.x_max, other.x_max),
+            min(self.y_max, other.y_max),
         ]
         return result
 
@@ -39,10 +36,10 @@ class Label:
             result = self
 
         result.bbox = [
-            min(self.x_min(), other.x_min()),
-            min(self.y_min(), other.y_min()),
-            max(self.x_max(), other.x_max()),
-            max(self.y_max(), other.y_max()),
+            min(self.x_min, other.x_min),
+            min(self.y_min, other.y_min),
+            max(self.x_max, other.x_max),
+            max(self.y_max, other.y_max),
         ]
         return result
     
@@ -52,7 +49,7 @@ class Label:
         other.bbox = self.bbox.copy()
     
     def area(self):
-        return (self.x_max() - self.x_min()) * (self.y_max() - self.y_min())
+        return (self.x_max - self.x_min) * (self.y_max - self.y_min)
     
     def __repr__(self):
         return f"{self.name}"
