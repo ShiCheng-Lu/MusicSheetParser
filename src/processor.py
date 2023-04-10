@@ -1,38 +1,34 @@
-from music import Note
+from note_processor import Note
 import math
 from common import Label
+import staff_utils
+import operator
 
 class MusicParser:
-    def __init__(self, labels: list[Label]):
+    def __init__(self, labels: list[Label], name=None, process_all=True):
         self.labels = labels
-        
-        self._pre_process()
-        self._split_labels_by_staffs()
-        self._process_labels()
-        self._complete_notes()
+        self.name = name
 
-    def _pre_process(self):
+        if process_all:
+            self.process_all()
+    
+    def process_all(self):
+        self.pre_process()
+        self.split_labels_by_staffs()
+        self.process_labels()
+        self.complete_notes()
+
+    def pre_process(self):
+        '''
+        preprocess labels
+        '''
         self.staffs: list[Label] = []
 
         tempo_note = Label([math.inf, math.inf, math.inf, math.inf])
         for label in self.labels:
-            
-            # REMOVE: for testing only, TODO need to figure out a way to limit bad labels from sheet title
-            if label.y_max() < 500:
-                continue
-
-            if label.name == 'staff':
-                # merge any staffs that are intersecting
-                for staff in self.staffs:
-                    if staff.intersects(label):
-                        staff.union(label)
-                        break
-                else:
-                    self.staffs.append(label)
-            
             # make noteheads a little larger for better modifier detection
             if 'notehead' in label.name:
-                size_offset = (label.x_max() - label.x_min()) * 0.1 # extend by 10%
+                size_offset = (label.x_max - label.x_min) * 0.1 # extend by 10%
                 label.bbox[0] -= size_offset
                 label.bbox[2] += size_offset
 
@@ -41,44 +37,40 @@ class MusicParser:
             
             # offset accidentals right to overlap them into the note they are modifying
             if 'accidental' in label.name:
-                size_offset = (label.x_max() - label.x_min())
+                size_offset = (label.x_max - label.x_min)
                 label.bbox[0] += size_offset
                 label.bbox[2] += size_offset
         
         self.labels.remove(tempo_note)
-
-        self.staffs.sort(key=Label.y_min)
-
-        for staff in self.staffs:
-            print(staff.bbox, staff.name)
     
-    def _split_labels_by_staffs(self):
-        cutoffs = [(a.y_max() + b.y_min()) / 2 for a, b in zip(self.staffs[:-1], self.staffs[1:])]
+    def split_labels_by_staffs(self):
+        self.staffs = staff_utils.get_staff(self.name)
+        cutoffs = [(a.y_max + b.y_min) / 2 for a, b in zip(self.staffs[:-1], self.staffs[1:])]
         cutoffs.append(math.inf)
 
         self.staff_labels = [[] for _ in self.staffs]
 
         for label in self.labels:
             # REMOVE: for testing only, TODO need to figure out a way to limit bad labels from sheet title
-            if label.y_max() < 500:
+            if label.y_max < 500:
                 continue
 
             for staff_idx, y in enumerate(cutoffs):
-                if label.y_min() < y:
+                if label.y_min < y:
                     self.staff_labels[staff_idx].append(label)
                     break
         
         print("split labels into staffs")
     
-    def _process_labels(self):
+    def process_labels(self):
         self.notes: list[list[Note]] = []
 
         for staff, staff_labels in zip(self.staffs, self.staff_labels):
-            notes = self._process_staff(staff, staff_labels)
+            notes = self.process_staff(staff, staff_labels)
             self.notes.append(notes)
     
-    def _process_staff(self, staff: Label, staff_labels: list[Label]) -> list[Note]:
-        staff_labels.sort(key=Label.x_min)
+    def process_staff(self, staff: Label, staff_labels: list[Label]) -> list[Note]:
+        staff_labels.sort(key=operator.attrgetter("x_min"))
 
         clef = Label(None, "clefF") # bass clef are hard to detect for some reason, default to base
 
@@ -108,7 +100,7 @@ class MusicParser:
         label = next(mods_iterator, None)
         while label != None:
             # pre note modifiers
-            if label.x_max() > notes[0].label.x_min():
+            if label.x_max > notes[0].label.x_min:
                 break
             global_mods.append(label)
 
@@ -124,7 +116,7 @@ class MusicParser:
         
         return notes
     
-    def _complete_notes(self):
+    def complete_notes(self):
         for notes in self.notes:
             start_time = 0
             last_note_time = 0
@@ -134,16 +126,16 @@ class MusicParser:
             notes = iter(notes)
             group_end = 0
             while (note := next(notes, None)):
-                if note.label.x_min() > group_end:
+                if note.label.x_min > group_end:
                     start_time += last_note_time
                     note_group_counter += 1
                 
-                group_end = note.label.x_max()
+                group_end = note.label.x_max
 
                 note.complete()
                 note.start_time = start_time
                 
-                group_end = note.label.x_max()
+                group_end = note.label.x_max
                 last_note_time = note.duration
             
             print(note_group_counter, start_time + last_note_time)
@@ -176,12 +168,14 @@ if __name__ == "__main__":
     
     labels = [Label(x['bbox'], x['name']) for x in labels]
 
-    parser = MusicParser(labels)
+    parser = MusicParser(labels, "sheets/genshin main theme.png")
 
     import player
     import music
     
-    player.PianoPlayer().play(music.Music(parser.notes, 0.5))
+    print(parser.notes)
+
+    player.PianoPlayer().play(music.Music(parser.notes, 80))
     # import dataset
     # import matplotlib.pyplot as plt
     # data = dataset.MusicSheetDataSet("ds2_dense")

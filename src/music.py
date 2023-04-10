@@ -1,9 +1,10 @@
 class Note:
     def __init__(self, pitch=None, duration=0, start_time=0):
         '''
-        pitch: integer, semitones relative to A4
-        duration: duration relative to a whole note
-        start_time: start_time relative in whole note units
+        Create a Note
+        - pitch: integer, semitones relative to A4
+        - duration: duration relative to a whole note
+        - start_time: start_time relative in whole note units
         '''
         self.pitch: int = pitch
         self.duration: int = duration
@@ -14,6 +15,7 @@ class Music:
         '''
         
         '''
+        Note()
         self.bpm: int = bpm
         self.notes: list[Note] = notes
         self.compiled = False
