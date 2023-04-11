@@ -1,5 +1,5 @@
 import random
-from labels import Label, Bbox
+from common import Label, Bbox
 
 class Transform:
     def __init__(self, *args):
