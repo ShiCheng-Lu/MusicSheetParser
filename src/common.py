@@ -1,7 +1,6 @@
-class Label:
-    def __init__(self, bbox=None, name=None):
+class Bbox:
+    def __init__(self, bbox=None):
         self.bbox: list[float] = bbox
-        self.name: str = name
     
     @property
     def bbox(self):
@@ -45,11 +44,23 @@ class Label:
     
     def copy(self, other=None):
         if other == None:
-            other = Label(None, None, None)
+            other = Bbox(None)
         other.bbox = self.bbox.copy()
     
     def area(self):
         return (self.x_max - self.x_min) * (self.y_max - self.y_min)
+    
+
+class Label(Bbox):
+    def __init__(self, bbox=None, name=None):
+        super().__init__(bbox)
+        self.name: str = name
+    
+    def copy(self, other=None):
+        if other == None:
+            other = Label(None, None)
+        super().copy(self, other)
+        other.name = self.name
     
     def __repr__(self):
         return f"{self.name}"

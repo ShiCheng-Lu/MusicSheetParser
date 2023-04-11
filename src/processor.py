@@ -26,25 +26,20 @@ class MusicParser:
 
         tempo_note = Label([math.inf, math.inf, math.inf, math.inf])
         for label in self.labels:
-            # make noteheads a little larger for better modifier detection
             if 'notehead' in label.name:
-                size_offset = (label.x_max - label.x_min) * 0.1 # extend by 10%
-                label.bbox[0] -= size_offset
-                label.bbox[2] += size_offset
 
-                if label.bbox[0] + label.bbox[1] < tempo_note.bbox[0] + tempo_note.bbox[1]:
+                if label.x_min + label.y_min < tempo_note.x_min + tempo_note.y_min:
                     tempo_note = label
             
-            # offset accidentals right to overlap them into the note they are modifying
-            if 'accidental' in label.name:
-                size_offset = (label.x_max - label.x_min)
-                label.bbox[0] += size_offset
-                label.bbox[2] += size_offset
         
         self.labels.remove(tempo_note)
     
     def split_labels_by_staffs(self):
+        '''
+        split labels into the staffs they are in
+        '''
         self.staffs = staff_utils.get_staff(self.name)
+
         cutoffs = [(a.y_max + b.y_min) / 2 for a, b in zip(self.staffs[:-1], self.staffs[1:])]
         cutoffs.append(math.inf)
 
@@ -78,18 +73,32 @@ class MusicParser:
         mods: list[Label] = []
         for label in staff_labels:
             if 'notehead' in label.name:
+                # make noteheads a little larger for better modifier detection
+                size_offset = (label.x_max - label.x_min) * 0.05 # extend by 5%
+                label.x_min -= size_offset
+                label.x_max += size_offset
                 notes.append(Note(label, clef, staff))
             elif 'rest' in label.name:
                 notes.append(Note(label, clef, staff))
             elif 'clef' in label.name:
                 clef = label
+            elif 'accidental' in label.name:
+                # offset accidentals right to overlap them into the note they are modifying
+                size_offset = (label.x_max - label.x_min)
+                label.x_min += size_offset
+                label.x_max += size_offset
+                mods.append(label)
+            elif 'augmentationDot' in label.name:
+                # offset augmentationDot left to overlap the note
+                size_offset = (label.x_max - label.x_min)
+                label.x_min -= size_offset
+                label.x_max -= size_offset
+                mods.append(label)
+            elif any(mod_name in label.name for mod_name in ['flag', 'beam', 'slur', 'tie']):
+                label.y_min = 0
+                label.y_max = math.inf
+                mods.append(label)
             else:
-                # pre process some mods
-                area_mods = ['flag', 'beam', 'slur', 'tie']
-                if any(mod_name in label.name for mod_name in area_mods):
-                    label.bbox[1] = 0
-                    label.bbox[3] = math.inf
-
                 mods.append(label)
 
         print(len(notes))
@@ -146,6 +155,7 @@ class MusicParser:
         end_times = []
         all_notes = []
         for index, notes in enumerate(self.notes):
+            print(notes)
             for note in notes:
                 note.start_time += start_time
                 all_notes.append(note)
@@ -172,10 +182,20 @@ if __name__ == "__main__":
 
     import player
     import music
-    
-    print(parser.notes)
 
-    player.PianoPlayer().play(music.Music(parser.notes, 80))
+    import matplotlib.pyplot as plt
+    import torch
+    import cv2
+    from torchvision.utils import draw_bounding_boxes
+
+    img = cv2.imread("sheets/genshin main theme.png", cv2.IMREAD_GRAYSCALE)
+    boxes = [note.label.bbox for note in parser.notes]
+    labels = [note.label.name if note.pitch == None else music.PITCH_MAP[note.pitch] for note in parser.notes]
+
+    plt.imshow(draw_bounding_boxes(torch.tensor(img).unsqueeze(0), torch.tensor(boxes), labels, font_size=30).moveaxis(0, 2))
+
+    plt.savefig("staffs.png", dpi=800)
+    # player.PianoPlayer().play(music.Music(parser.notes, 80))
     # import dataset
     # import matplotlib.pyplot as plt
     # data = dataset.MusicSheetDataSet("ds2_dense")

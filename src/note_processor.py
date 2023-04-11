@@ -98,8 +98,9 @@ class Note(music.Note):
             beam_count = sum('beam' == mod.name for mod in self.modifiers)
             self.duration = 1 / (2 ** (beam_count + 2))
 
-        # augmentation = sum(mod.name == "augmentationdot" for mod in self.modifiers)
-        # self.duration = self.duration * (2 - (1 / 2) ** augmentation)
+        augmentation = sum(mod.name == "augmentationdot" for mod in self.modifiers)
+        self.duration = self.duration * (2 - (1 / 2) ** augmentation)
+
 
     def __init__(self, label: Label, clef: Label, staff: Label):
         self.label = label
