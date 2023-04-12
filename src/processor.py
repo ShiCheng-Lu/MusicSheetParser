@@ -4,6 +4,15 @@ from common import Label
 import staff_utils
 import operator
 
+'''
+Parser:
+1. object detection with model
+2. split by staff and bar
+3. re-detect bars that are 'invalid' (optionally re-detect every bar)
+4. output to manual editor
+'''
+
+
 class MusicParser:
     def __init__(self, labels: list[Label], name=None, process_all=True):
         self.labels = labels
@@ -93,6 +102,10 @@ class MusicParser:
                 size_offset = (label.x_max - label.x_min)
                 label.x_min -= size_offset
                 label.x_max -= size_offset
+                mods.append(label)
+            elif 'key' in label.name:
+                label.x_min = 0
+                label.x_max = math.inf
                 mods.append(label)
             elif any(mod_name in label.name for mod_name in ['flag', 'beam', 'slur', 'tie']):
                 label.y_min = 0
@@ -195,6 +208,21 @@ if __name__ == "__main__":
     plt.imshow(draw_bounding_boxes(torch.tensor(img).unsqueeze(0), torch.tensor(boxes), labels, font_size=30).moveaxis(0, 2))
 
     plt.savefig("staffs.png", dpi=800)
+
+    # save notes as Labels
+    durations = [note.duration for note in parser.notes]
+    list_res = []
+    for bbox, label, duration in zip(boxes, labels, durations):
+        list_res.append({
+            "bbox": bbox,
+            "name": label,
+            "duration": duration,
+        })
+
+    import json
+    with open("notes.json", 'w') as f:
+        f.write(json.dumps(list_res))
+
     # player.PianoPlayer().play(music.Music(parser.notes, 80))
     # import dataset
     # import matplotlib.pyplot as plt
