@@ -11,6 +11,14 @@ class Bbox:
         if v == None: return
         self.x_min, self.y_min, self.x_max, self.y_max = v
     
+    @property
+    def width(self):
+        return self.x_max - self.x_min
+    
+    @property
+    def height(self):
+        return self.y_max - self.y_min
+    
     def intersects(self, other) -> bool:
         return (self.x_max >= other.x_min and
                 self.x_min <= other.x_max and
@@ -49,7 +57,6 @@ class Bbox:
     
     def area(self):
         return (self.x_max - self.x_min) * (self.y_max - self.y_min)
-    
 
 class Label(Bbox):
     def __init__(self, bbox=None, name=None):
