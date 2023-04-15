@@ -31,3 +31,17 @@ PITCH_MAP = [ # range: -48 to +39
     "A2", "Bb2", "B2", "C3", "Db3", "D3", "Eb3", "E3", "F3", "Gb3", "G3", "Ab3",
     "A3", "Bb3", "B3", "C4", "Db4", "D4", "Eb4", "E4", "F4", "Gb4", "G4", "Ab4",
 ]
+
+def display_duration(duration: float):
+    '''
+    displayed duration 1/2, 3/4 etc.
+    '''
+    if duration == int(duration):
+        return f"{duration}"
+    
+    denom = 2
+    while True:
+        numerator = duration * denom
+        if numerator == int(numerator):
+            return f"{int(numerator)}/{denom}"
+        denom += 1

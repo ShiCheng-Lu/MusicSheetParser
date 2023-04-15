@@ -54,6 +54,7 @@ class Bbox:
         if other == None:
             other = Bbox(None)
         other.bbox = self.bbox.copy()
+        return other
     
     def area(self):
         return (self.x_max - self.x_min) * (self.y_max - self.y_min)

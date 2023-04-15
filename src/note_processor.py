@@ -8,11 +8,13 @@ class Note(music.Note):
         note_center = (notehead.y_min + notehead.y_max) / 2
 
         # use whether note in inspace to more accurately determine relative position
-        if 'InSpace' in notehead.name:
-            rel_position = round((self.staff_center - note_center - self.offset_size) / (self.offset_size * 2)) * 2 + 1
-        else:
-            rel_position = round((self.staff_center - note_center) / (self.offset_size * 2)) * 2
+        # if 'InSpace' in notehead.name:
+        #     rel_position = round((self.staff_center - note_center - self.offset_size) / (self.offset_size * 2)) * 2 + 1
+        # else:
+        #     rel_position = round((self.staff_center - note_center) / (self.offset_size * 2)) * 2
         
+        rel_position = round((self.staff_center - note_center) / self.offset_size)
+
         return int(rel_position)
 
     def _get_semitone(self, notehead: Label):
