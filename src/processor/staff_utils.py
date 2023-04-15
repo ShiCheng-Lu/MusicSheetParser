@@ -92,7 +92,7 @@ def get_bars(img: cv2.Mat, staff: Label, avoid: list[Label]=[], label_name="bar"
 
     return bars
 
-def section(img: cv2.Mat):
+def vertical_section(img: cv2.Mat):
     staffs = get_staffs(img)
     # split image vertically based on staffs
     width = img.shape[1]
@@ -101,10 +101,10 @@ def section(img: cv2.Mat):
     resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA).flatten()
 
     # median y of the brightest rows
-    cuttoffs = []
-
-    low = staffs[0].y_min - staffs[0].height
-    for staff in staffs:
+    cutoffs = []
+    low = staffs[0].y_min - staffs[0].height * 2
+    high = staffs[-1].y_max + staffs[-1].height * 2
+    for staff in staffs + [Bbox([0, high, 0, 0])]:
         high = staff.y_min
         # find median y of the brightest rows
         brightest = [low]
@@ -113,14 +113,20 @@ def section(img: cv2.Mat):
                 brightest = [row]
             elif resized[row] == resized[brightest[0]]:
                 brightest.append(row)
-        cuttoffs.append(brightest[len(brightest) // 2])
+        cutoffs.append(brightest[len(brightest) // 2])
         # prepare for next iteration
         low = staff.y_max
 
-    return cuttoffs
+    # remove rows that are not over the brightness cuffoff
+    for cutoff in cutoffs:
+        if resized[cutoff] < 254:
+            cutoffs.remove(cutoff)
 
+    labels = []
+    for y_min, y_max in zip(cutoffs[:-1], cutoffs[1:]):
+        labels.append(Label([0, y_min, width, y_max]))
 
-
+    return labels
 
 if __name__ == "__main__":
     # only import if script is ran directly, these imports are quite slow
@@ -131,7 +137,7 @@ if __name__ == "__main__":
 
     img = cv2.imread("sheets/genshin main theme.png", cv2.IMREAD_GRAYSCALE)
     width = img.shape[1]
-    bars = [Label([0, s, width, s], "section") for s in section(img)]
+    bars = vertical_section(img)
 
     # start = time.time()
 

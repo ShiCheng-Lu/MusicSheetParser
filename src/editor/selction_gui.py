@@ -3,7 +3,7 @@ import pygame
 import pygame_gui
 from common import Bbox
 import music
-import pygame_utils
+import editor.pygame_utils as pygame_utils
 from editor.note import Note
 
 w, h = 1080, 860
@@ -37,12 +37,23 @@ class NoteEditorMenu:
             start_value=0,
             value_range=(0, 32),)
         
-        # self.save_button = 
+        self.save_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(0, 600, menu_rect.width, 50),
+            container=self.panel,
+            manager=manager,
+            text="Save")
+        
+        self.selected = None
     
     def set_selected(self, note: Note):
-        self.pitch_selector.selected_option = note.name
-        self.duration_selector.set_current_value(note.duration * 32)
-        self.update()
+        self.selected = note
+        if note:
+            self.pitch_selector.selected_option = note.name
+            self.pitch_selector.menu_states['closed'].selected_option = note.name
+            self.pitch_selector.menu_states['expanded'].selected_option = note.name
+
+            self.duration_selector.set_current_value(note.duration * 32)
+            self.update()
     
     def update(self):
         duration_text = music.display_duration(self.duration_selector.current_value / 32)
@@ -52,5 +63,11 @@ class NoteEditorMenu:
         if event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
             if event.ui_element == self.duration_selector:
                 self.update()
+        
+        if event.type == pygame_gui.UI_BUTTON_PRESSED:
+            if self.selected:
+                self.selected.update(
+                    self.pitch_selector.selected_option, 
+                    self.duration_selector.current_value / 32)
 
 

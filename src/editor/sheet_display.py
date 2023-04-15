@@ -81,5 +81,6 @@ class SheetDisplay:
                 note.renderColour = (25, 200, 25)
             if selected != None:
                 selected.renderColour = (200, 150, 25)
-                if self.on_selected_note: self.on_selected_note(selected)
+            if self.on_selected_note:
+                self.on_selected_note(selected)
             self.render()
