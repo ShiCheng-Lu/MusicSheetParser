@@ -3,6 +3,7 @@ import math
 from common import Label
 import staff_utils
 import operator
+import cv2
 
 '''
 Parser:
@@ -17,6 +18,7 @@ class MusicParser:
     def __init__(self, labels: list[Label], name=None, process_all=True):
         self.labels = labels
         self.name = name
+        self.image = cv2.imread(name, cv2.IMREAD_GRAYSCALE)
 
         if process_all:
             self.process_all()
@@ -47,7 +49,7 @@ class MusicParser:
         '''
         split labels into the staffs they are in
         '''
-        self.staffs = staff_utils.get_staff(self.name)
+        self.staffs = staff_utils.get_staff(self.image)
 
         cutoffs = [(a.y_max + b.y_min) / 2 for a, b in zip(self.staffs[:-1], self.staffs[1:])]
         cutoffs.append(math.inf)
@@ -201,11 +203,10 @@ if __name__ == "__main__":
     import cv2
     from torchvision.utils import draw_bounding_boxes
 
-    img = cv2.imread("sheets/genshin main theme.png", cv2.IMREAD_GRAYSCALE)
     boxes = [note.label.bbox for note in parser.notes]
     labels = [note.label.name if note.pitch == None else music.PITCH_MAP[note.pitch] for note in parser.notes]
 
-    plt.imshow(draw_bounding_boxes(torch.tensor(img).unsqueeze(0), torch.tensor(boxes), labels, font_size=30).moveaxis(0, 2))
+    plt.imshow(draw_bounding_boxes(torch.tensor(parser.image).unsqueeze(0), torch.tensor(boxes), labels, font_size=30).moveaxis(0, 2))
 
     plt.savefig("staffs.png", dpi=800)
 
@@ -223,11 +224,5 @@ if __name__ == "__main__":
     with open("notes.json", 'w') as f:
         f.write(json.dumps(list_res))
 
-    # player.PianoPlayer().play(music.Music(parser.notes, 80))
-    # import dataset
-    # import matplotlib.pyplot as plt
-    # data = dataset.MusicSheetDataSet("ds2_dense")
-    # image, label = data[2]
-    # plt.imshow(image)
-    # plt.savefig("img.png", dpi=800)
+    player.PianoPlayer().play(music.Music(parser.notes, 80))
 
