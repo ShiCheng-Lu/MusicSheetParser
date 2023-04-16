@@ -1,9 +1,10 @@
-from note_processor import Note
+from processor.note_processor import Note
 import math
 from common import Label
-import staff_utils
+import processor.staff_utils as staff_utils
 import operator
 import cv2
+from processor.section_processor import SectionProcessor
 
 '''
 Parser:
@@ -13,6 +14,36 @@ Parser:
 4. output to manual editor
 '''
 
+class MusicParser2:
+    def __init__(self, labels: list[Label], name):
+        self.labels = labels
+        self.image = cv2.imread(name, cv2.IMREAD_GRAYSCALE)
+
+        self.sections: list[SectionProcessor] = []
+
+        self.staffs = staff_utils.get_staffs(self.image)
+
+        for section in staff_utils.section(self.image):
+            section_labels = []
+            section_staffs = []
+            for label in self.labels:
+                if label.intersects(section):
+                    section_labels.append(label)
+            for staff in self.staffs:
+                if staff.intersects(section):
+                    section_staffs.append(staff)
+            self.sections.append(SectionProcessor(section, section_staffs, section_labels))
+    
+    def process(self):
+        for section in self.sections:
+            section.process()
+    
+    @property
+    def notes(self):
+        notes = []
+        for section in self.sections:
+            notes.extend(section.notes)
+        return notes
 
 class MusicParser:
     def __init__(self, labels: list[Label], name=None, process_all=True):
@@ -49,7 +80,7 @@ class MusicParser:
         '''
         split labels into the staffs they are in
         '''
-        self.staffs = staff_utils.get_staff(self.image)
+        self.staffs = staff_utils.get_staffs(self.image)
 
         cutoffs = [(a.y_max + b.y_min) / 2 for a, b in zip(self.staffs[:-1], self.staffs[1:])]
         cutoffs.append(math.inf)
@@ -184,45 +215,3 @@ class MusicParser:
 
     def __repr__(self) -> str:
         return "\n".join([str(notes) for notes in self.notes])
-
-if __name__ == "__main__":
-    import json
-
-    with open(f"nggup2.json") as f:
-        labels = json.load(f)
-    
-    labels = [Label(x['bbox'], x['name']) for x in labels]
-
-    parser = MusicParser(labels, "sheets/genshin main theme.png")
-
-    import player
-    import music
-
-    import matplotlib.pyplot as plt
-    import torch
-    import cv2
-    from torchvision.utils import draw_bounding_boxes
-
-    boxes = [note.label.bbox for note in parser.notes]
-    labels = [note.label.name if note.pitch == None else music.PITCH_MAP[note.pitch] for note in parser.notes]
-
-    plt.imshow(draw_bounding_boxes(torch.tensor(parser.image).unsqueeze(0), torch.tensor(boxes), labels, font_size=30).moveaxis(0, 2))
-
-    plt.savefig("staffs.png", dpi=800)
-
-    # save notes as Labels
-    durations = [note.duration for note in parser.notes]
-    list_res = []
-    for bbox, label, duration in zip(boxes, labels, durations):
-        list_res.append({
-            "bbox": bbox,
-            "name": label,
-            "duration": duration,
-        })
-
-    import json
-    with open("notes.json", 'w') as f:
-        f.write(json.dumps(list_res))
-
-    player.PianoPlayer().play(music.Music(parser.notes, 80))
-

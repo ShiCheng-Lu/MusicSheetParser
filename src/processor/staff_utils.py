@@ -1,5 +1,6 @@
 import cv2
 from common import Label, Bbox
+from processor.note_processor import Staff
 
 def get_staffs(img: cv2.Mat, label_name="staff"):
     '''
@@ -32,7 +33,7 @@ def get_staffs(img: cv2.Mat, label_name="staff"):
             last_dense_line = index - STAFF_VERTICAL_GAP
     staff_ends.reverse()
 
-    return [Label([0, start, width, end], label_name) for start, end in zip(staff_starts, staff_ends)]
+    return [Staff([0, start, width, end], label_name) for start, end in zip(staff_starts, staff_ends)]
 
 def get_bars(img: cv2.Mat, staff: Label, avoid: list[Label]=[], label_name="bar"):
     '''
@@ -92,7 +93,7 @@ def get_bars(img: cv2.Mat, staff: Label, avoid: list[Label]=[], label_name="bar"
 
     return bars
 
-def vertical_section(img: cv2.Mat):
+def vertical_section(img: cv2.Mat) -> list[Label]:
     staffs = get_staffs(img)
     # split image vertically based on staffs
     width = img.shape[1]
@@ -128,32 +129,34 @@ def vertical_section(img: cv2.Mat):
 
     return labels
 
-if __name__ == "__main__":
-    # only import if script is ran directly, these imports are quite slow
-    import matplotlib.pyplot as plt
-    import torch
-    from torchvision.utils import draw_bounding_boxes
-    import time
+import math
 
-    img = cv2.imread("sheets/genshin main theme.png", cv2.IMREAD_GRAYSCALE)
+def section(img: cv2.Mat):
     width = img.shape[1]
-    bars = vertical_section(img)
+    height = img.shape[0]
 
-    # start = time.time()
+    vertial_sections = vertical_section(img)
+    staffs = get_staffs(img)
 
-    # staffs = get_staffs(img)
-    # bars: list[Label] = []
-    # for staff in staffs:
-    #     bars.extend(get_bars(img, staff))
+    sections = []
 
-    boxes = [staff.bbox for staff in bars]
-    labels = [staff.name for staff in bars]
+    for section in vertial_sections:
+        section_staffs = []
+        section_bars = []
+        for staff in staffs:
+            if section.intersects(staff):
+                section_staffs.append(staff)
+            
+                for bar in get_bars(img, staff):
+                    bar.y_min = 0
+                    bar.y_max = math.inf
+                    for section_bar in section_bars:
+                        if bar.intersects(section_bar):
+                            break
+                    else:
+                        section_bars.append(bar)
 
-    # end = time.time()
-    # print(f"Process time: {end - start}")
+        for x_min, x_max in zip([Bbox([0, 0, 0, 0])] + section_bars, section_bars + [Bbox([width, 0, width, 0])]):
+            sections.append(Label([x_min.x_max, section.y_min, x_max.x_min, section.y_max], "section"))
 
-
-    plt.imshow(draw_bounding_boxes(torch.tensor(img).unsqueeze(0), torch.tensor(boxes), labels).moveaxis(0, 2))
-
-    plt.savefig("staffs.png", dpi=800)
-    plt.show()
+    return sections

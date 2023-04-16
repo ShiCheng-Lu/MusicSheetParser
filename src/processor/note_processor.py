@@ -131,3 +131,10 @@ class Note(music.Note):
 
     def __repr__(self):
         return f"{'rest' if self.pitch == None else PITCH_MAP[self.pitch]} {self.duration} {self.start_time}"
+
+
+class Staff(Label):
+    def __init__(self, bbox, name):
+        super().__init__(bbox, name)
+        self.keys: list[Label]
+        self.clef = Label(None, "clefF") # bass clef are hard to detect for some reason, default to base
