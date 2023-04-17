@@ -62,8 +62,6 @@ def test_processor():
     parser.process()
     notes = [convert_to_note(note) for note in parser.notes]
 
-    print(parser.notes)
-
     pygame.init()
     w, h = 1080, 860
     screen = pygame.display.set_mode((w, h))
