@@ -2,7 +2,9 @@ from common import Bbox, Label
 from processor.note_processor import Note, Staff
 import math
 
-class BarProcessor:
+from common.note import Bar
+
+class BarProcessor(Bar):
     def __init__(self, section: Label, staff: Staff, labels: list[Label]):
         self.section = section
         self.staff = staff
