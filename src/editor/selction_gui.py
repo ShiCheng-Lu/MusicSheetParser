@@ -86,8 +86,7 @@ class NoteEditorMenu:
         
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if self.selected:
-                self.selected.update(
-                    self.pitch_selector.selected_option, 
-                    self.duration_selector.current_value / 32)
-
-
+                pass
+                # self.selected.update(
+                #     self.pitch_selector.selected_option, 
+                #     self.duration_selector.current_value / 32)
