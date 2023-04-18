@@ -38,10 +38,6 @@ Music data structure
 '''
 
 
-
-
-
-
 from common.label import Label
 
 TONE_MAP = [ # range: -48 to +39 relative to A4
@@ -57,10 +53,11 @@ TONE_MAP = [ # range: -48 to +39 relative to A4
 ]
 
 class Note(Label):
-    def __init__(self):
-        self.duration: float
-        self.pitch: int
-        self.start: float
+    def __init__(self, bbox=None, name=None):
+        super().__init__(bbox, name)
+        self.duration: float = 0
+        self.pitch: int = 0
+        self.start: float = 0
         self.modifier: int = 0 # +1/-1 for sharp or flat
         self.parent_bar = None # Bar
     
@@ -77,13 +74,17 @@ class Note(Label):
             case 6: semitone += 10
         return semitone + self.modifier
     
+    @property
+    def pitch_str(self):
+        return 'rest' if 'rest' in self.name else TONE_MAP[self.semitone]
+    
     def copy(self, other=None):
         if other == None:
             other = Note()
         super().copy(other)
         other.pitch = self.pitch
         other.start = self.start
-        other.parent = self.parent
+        other.parent_bar = self.parent_bar
         other.modifier = self.modifier
         return other
     
@@ -104,8 +105,8 @@ class Note(Label):
 
 
 class Bar(Label):
-    def __init__(self, bbox=None):
-        super().__init__(bbox)
+    def __init__(self, bbox=None, name=None):
+        super().__init__(bbox, name)
         self.parent_staff = None
     
     def copy(self, other=None):
@@ -127,11 +128,11 @@ class Bar(Label):
         return self
 
 class Staff(Label):
-    def __init__(self, bbox=None):
-        super().__init__(bbox)
-        self.keys: list[int]
-        self.clef: Label
-        self.bars: list[Bar]
+    def __init__(self, bbox=None, name=None):
+        super().__init__(bbox, name)
+        self.keys: list[int] = []
+        self.clef: Label = None
+        self.bars: list[Bar] = []
     
     def copy(self, other=None):
         if other == None:
@@ -158,22 +159,36 @@ class Staff(Label):
 
 class Music:
     def __init__(self):
-        self.staffs: list[Staff]
-        self.bars: list[Bar]
-        self.notes: list[Note]
+        self.staffs: list[Staff] = []
+        self.group: int = None
     
     def copy(self, other=None):
         if other == None:
             other = Music()
         other.staffs = [staff.copy() for staff in self.staffs]
-        other.bars = [bar.copy() for bar in self.bars]
-        other.notes = [note.copy() for note in self.notes]
+        other.group = other.group
     
     def to_dict(self):
-        return [[bar.to_dict() for bar in bar_group] for bar_group in self.bars]
+        return {
+            "staffs": [staff.to_dict() for staff in self.staffs],
+            "group": self.group,
+        }
     
     def from_dict(self, data):
-        self.bars = [[Bar().from_dict(bar) for bar in bar_gorup] for bar_gorup in data]
-        self.keys = data['keys']
-        self.clef = Label().from_dict(data['clef'])
+        self.staffs = [Staff().from_dict(data) for data in data["staffs"]]
+        self.group = data["group"]
         return self
+
+def display_duration(duration: float):
+    '''
+    displayed duration 1/2, 3/4 etc.
+    '''
+    if duration == int(duration):
+        return f"{duration}"
+    
+    denom = 2
+    while True:
+        numerator = duration * denom
+        if numerator == int(numerator):
+            return f"{int(numerator)}/{denom}"
+        denom += 1

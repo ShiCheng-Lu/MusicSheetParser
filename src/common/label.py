@@ -8,7 +8,8 @@ class Bbox:
 
     @bbox.setter
     def bbox(self, v):
-        if v == None: return
+        if v == None:
+            v = [None, None, None, None]
         self.x_min, self.y_min, self.x_max, self.y_max = v
     
     @property
@@ -74,7 +75,7 @@ class Label(Bbox):
     def copy(self, other=None):
         if other == None:
             other = Label()
-        super().copy(self, other)
+        super().copy(other)
         other.name = self.name
     
     def __repr__(self):

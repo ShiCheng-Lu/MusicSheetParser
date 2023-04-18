@@ -1,6 +1,6 @@
 import cv2
-from common import Label, Bbox
-from processor.note_processor import Staff
+from common.label import Label, Bbox
+from common.music import Staff, Bar
 
 def get_staffs(img: cv2.Mat, label_name="staff"):
     '''
@@ -33,9 +33,10 @@ def get_staffs(img: cv2.Mat, label_name="staff"):
             last_dense_line = index - STAFF_VERTICAL_GAP
     staff_ends.reverse()
 
-    return [Staff([0, start, width, end], label_name) for start, end in zip(staff_starts, staff_ends)]
+    return [Staff([0, start, width, end], f"{label_name}-{index}") 
+            for index, start, end in zip(range(len(staff_starts)), staff_starts, staff_ends)]
 
-def get_bars(img: cv2.Mat, staff: Label, avoid: list[Label]=[], label_name="bar"):
+def get_bars(img: cv2.Mat, staff: Staff, avoid: list[Label]=[], label_name="bar"):
     '''
     Get bars
     - img: the image matrix
@@ -54,12 +55,12 @@ def get_bars(img: cv2.Mat, staff: Label, avoid: list[Label]=[], label_name="bar"
     '''
     a bar candidate is any vertical straight line that vertically spans the entire staff
     '''
-    bars_candidate: list[Label] = []
+    bars_candidate: list[Bar] = []
     last_bar = None
     for index, density in enumerate(resized):
         if density < DENSITY_THRESHOLD:
             if last_bar == None:
-                last_bar = Label([index, staff.y_min, index, staff.y_max], label_name)
+                last_bar = Bar([index, staff.y_min, index, staff.y_max], label_name)
                 bars_candidate.append(last_bar)
             last_bar.x_max = index
         else:

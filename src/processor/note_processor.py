@@ -1,9 +1,8 @@
 import re
-import music
-from music import PITCH_MAP
-from common import Label
+from common.music import Note, TONE_MAP
+from common.label import Label
 
-class Note(music.Note):
+class NoteProcessor(Note):
     def _rel_position(self, notehead: Label):
         note_center = (notehead.y_min + notehead.y_max) / 2
 
@@ -18,31 +17,20 @@ class Note(music.Note):
         return int(rel_position)
 
     def _get_semitone(self, notehead: Label):
-        rel_position = self._rel_position(notehead)
+        self.pitch = self._rel_position(notehead)
         # offset rel_position to number of lines from A4 (tuned at 440Hz)
         match self.clef.name:
             case 'clefG': # treble clef
-                rel_position += 1
+                self.pitch += 1
             case 'clefCAlto':
-                rel_position -= 5
+                self.pitch -= 5
             case 'clefCTenor':
-                rel_position -= 7
+                self.pitch -= 7
             case 'clefF': # base clef
-                rel_position -= 11
-        
-        # find number of half tones
-        semitones = (rel_position // 7) * 12
-        match rel_position % 7:
-            case 0: semitones += 0
-            case 1: semitones += 2
-            case 2: semitones += 3
-            case 3: semitones += 5
-            case 4: semitones += 7
-            case 5: semitones += 8
-            case 6: semitones += 10
+                self.pitch -= 11
 
         # offset = self.staff_offsets[rel_position % 7]
-        offset = 0
+        self.modifier = 0
         # apply any flat/sharp modifiers
         notehead_size = notehead.y_max - notehead.y_min
         for modifier in self.modifiers:
@@ -53,42 +41,39 @@ class Note(music.Note):
                 continue
 
             if 'Natural' in modifier.name:
-                offset = 0
+                self.modifier = 0
             elif 'DoubleSharp' in modifier.name:
-                offset = 2
+                self.modifier = 2
             elif 'Sharp' in modifier.name:
-                offset = 1
+                self.modifier = 1
             elif 'DoubleFlat' in modifier.name:
-                offset = -2
+                self.modifier = -2
             elif 'Flat' in modifier.name:
-                offset = -1
-        semitones += offset
+                self.modifier = -1
         
-        return semitones
 
     def _get_pitch(self):
-        
-        if 'rest' in self.label.name:
+        if 'rest' in self.name:
             return
 
         self.staff_center = (self.staff.y_min + self.staff.y_max) / 2
         self.offset_size = (self.staff.y_max - self.staff.y_min) / 8
 
-        self.pitch = self._get_semitone(self.label)
+        self._get_semitone(self)
 
     def _get_duration(self):
         whole_note_len = 0.75 # because tempo was 3/4
 
-        if 'DoubleWhole' in self.label.name:
+        if 'DoubleWhole' in self.name:
             self.duration = 2 * whole_note_len
-        elif 'Whole' in self.label.name:
+        elif 'Whole' in self.name:
             self.duration = 1 * whole_note_len
-        elif 'Half' in self.label.name:
+        elif 'Half' in self.name:
             self.duration = 0.5
-        elif 'Quarter' in self.label.name:
+        elif 'Quarter' in self.name:
             self.duration = 0.25
-        elif 'rest' in self.label.name:
-            num = re.search(r'\d+', self.label.name).group()
+        elif 'rest' in self.name:
+            num = re.search(r'\d+', self.name).group()
             self.duration = 1 / int(num)
         elif any('flag' in mod.name for mod in self.modifiers): 
             # noteheadBlack, duration determined by flag
@@ -105,15 +90,11 @@ class Note(music.Note):
 
 
     def __init__(self, label: Label, clef: Label, staff: Label):
-        self.label = label
+        super().__init__(label.bbox, label.name)
+
         self.modifiers: list[Label] = []
         self.clef = clef
         self.staff = staff
-
-        self.pitch = None
-        self.duration = None
-        self.start_time = None
-
 
     def modify(self, labels):
         if type(labels) is Label:
@@ -130,11 +111,4 @@ class Note(music.Note):
         return self
 
     def __repr__(self):
-        return f"{'rest' if self.pitch == None else PITCH_MAP[self.pitch]} {self.duration} {self.start_time}"
-
-
-class Staff(Label):
-    def __init__(self, bbox, name):
-        super().__init__(bbox, name)
-        self.keys: list[Label]
-        self.clef = Label(None, "clefF") # bass clef are hard to detect for some reason, default to base
+        return f"{'rest' if self.pitch == None else TONE_MAP[self.pitch]} {self.duration} {self.start_time}"

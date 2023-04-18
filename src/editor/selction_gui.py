@@ -1,10 +1,10 @@
 
 import pygame
 import pygame_gui
-from common import Bbox
-import music
+from common.label import Bbox
+import common.music
 import editor.pygame_utils as pygame_utils
-from editor.note import Note
+from editor.music import Note
 
 w, h = 1080, 860
 menu_rect = Bbox([900, 0, 1080, 860])
@@ -23,7 +23,7 @@ class NoteEditorMenu:
             container=self.panel,
             manager=manager,
             anchors={"top_target": self.pitch_label},
-            options_list=music.PITCH_MAP,
+            options_list=common.music.TONE_MAP,
             starting_option="A4",)
         
         self.modifier_label = pygame_gui.elements.UILabel(
@@ -76,7 +76,7 @@ class NoteEditorMenu:
             self.update()
     
     def update(self):
-        duration_text = music.display_duration(self.duration_selector.current_value / 32)
+        duration_text = common.music.display_duration(self.duration_selector.current_value / 32)
         self.duration_label.set_text(f"Note Duration: {duration_text}")
 
     def process_event(self, event):
