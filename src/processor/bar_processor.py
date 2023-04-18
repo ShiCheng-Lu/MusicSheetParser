@@ -1,14 +1,13 @@
-from common import Bbox, Label
-from processor.note_processor import Note, Staff
+from common.label import Bbox, Label
+from common.music import Bar, Staff
+from processor.note_processor import NoteProcessor
 import math
-
-from common.note import Bar
 
 class BarProcessor(Bar):
     def __init__(self, section: Label, staff: Staff, labels: list[Label]):
         self.section = section
         self.staff = staff
-        self.notes: list[Note] = []
+        self.notes: list[NoteProcessor] = []
         self.labels = labels
 
     # def rel_position(self, bbox: Bbox):
@@ -21,6 +20,10 @@ class BarProcessor(Bar):
     #     return int(rel_position)
 
     def process(self):
+        # default to clefF
+        if self.staff.clef == None:
+            self.staff.clef = Label([0, 0, 0, 0], "clefF")
+
         mods: list[Label] = []
         for label in self.labels:
             if 'notehead' in label.name:
@@ -28,9 +31,9 @@ class BarProcessor(Bar):
                 size_offset = (label.x_max - label.x_min) * 0.05 # extend by 5%
                 label.x_min -= size_offset
                 label.x_max += size_offset
-                self.notes.append(Note(label, self.staff.clef, self.staff))
+                self.notes.append(NoteProcessor(label, self.staff.clef, self.staff))
             elif 'rest' in label.name:
-                self.notes.append(Note(label, self.staff.clef, self.staff))
+                self.notes.append(NoteProcessor(label, self.staff.clef, self.staff))
             elif 'clef' in label.name:
                 self.staff.clef = label
             elif 'accidental' in label.name:
@@ -58,7 +61,7 @@ class BarProcessor(Bar):
         
         for mod in mods:
             for note in self.notes:
-                if mod.intersects(note.label):
+                if mod.intersects(note):
                     note.modify(mod)
         
         for note in self.notes:

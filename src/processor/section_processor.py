@@ -1,9 +1,10 @@
-from common import Bbox, Label
+from common.label import Bbox, Label
+from common.music import Staff
 from processor.bar_processor import BarProcessor
 
 class SectionProcessor:
 
-    def __init__(self, section: Bbox, staffs, labels: list[Label]):
+    def __init__(self, section: Bbox, staffs: list[Staff], labels: list[Label]):
         self.section = section
         self.bars: list[BarProcessor] = []
 
@@ -14,10 +15,12 @@ class SectionProcessor:
             bar = Label([self.section.x_min, cutoff, self.section.x_max, mid])
 
             self.bars.append(BarProcessor(bar, a, []))
+            a.bars.append(BarProcessor(bar, a, []))
             cutoff = mid
         
         bar = Label([self.section.x_min, cutoff, self.section.x_max, self.section.y_max])
         self.bars.append(BarProcessor(bar, staffs[-1], []))
+        staffs[-1].bars.append(bar)
 
         for bar in self.bars:
             for label in labels:

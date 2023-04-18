@@ -1,7 +1,7 @@
 import pygame
 import pygame_gui
-from common import Bbox
-from editor.note import Note
+from common.label import Bbox
+from editor.music import Note
 
 w, h = 1080, 860
 # menu_rect = Bbox([900, 0, 1080, 860])
@@ -32,8 +32,7 @@ class SheetDisplay:
         self.surface.fill((0, 0, 0))
         self.surface.blit(display_img, self.image_rect)
         for note in self.notes:
-            note.updatePos(self.image_rect.x, self.image_rect.y, self.scale)
-            note.render(self.surface)
+            note.render(self.surface, self.image_rect.x, self.image_rect.y, self.scale)
 
         self.display_image.set_image(self.surface)
 

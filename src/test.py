@@ -47,20 +47,13 @@ def test_processor():
     
     import pygame
     import pygame_gui
-    from editor.note import Note
+    from editor.music import Note
     from editor.selction_gui import NoteEditorMenu
     from editor.sheet_display import SheetDisplay
     import json
-    import music
-
-    def convert_to_note(note):
-        return Note(
-            note.label.bbox,
-            note.label.name if note.pitch == None else music.PITCH_MAP[note.pitch],
-            note.duration)
 
     parser.process()
-    notes = [convert_to_note(note) for note in parser.notes]
+    notes = [Note(note) for note in parser.notes]
 
     pygame.init()
     w, h = 1080, 860

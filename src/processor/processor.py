@@ -1,6 +1,7 @@
 from processor.note_processor import Note
 import math
-from common import Label
+from common.label import Label
+from common.music import Music
 import processor.staff_utils as staff_utils
 import operator
 import cv2
@@ -14,8 +15,9 @@ Parser:
 4. output to manual editor
 '''
 
-class MusicParser2:
+class MusicParser2(Music):
     def __init__(self, labels: list[Label], name):
+        super().__init__()
         self.labels = labels
         self.image = cv2.imread(name, cv2.IMREAD_GRAYSCALE)
 
@@ -33,6 +35,9 @@ class MusicParser2:
                 if staff.intersects(section):
                     section_staffs.append(staff)
             self.sections.append(SectionProcessor(section, section_staffs, section_labels))
+
+            if self.group == None:
+                self.group = len(section_staffs)
     
     def process(self):
         for section in self.sections:
