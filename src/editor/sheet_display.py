@@ -32,7 +32,8 @@ class SheetDisplay:
         self.surface.fill((0, 0, 0))
         self.surface.blit(display_img, self.image_rect)
         for note in self.notes:
-            note.render(self.surface, self.image_rect.x, self.image_rect.y, self.scale)
+            note.update(self.image_rect.x, self.image_rect.y, self.scale)
+            note.render(self.surface)
 
         self.display_image.set_image(self.surface)
 

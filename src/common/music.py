@@ -82,10 +82,11 @@ class Note(Label):
         if other == None:
             other = Note()
         super().copy(other)
+        other.duration = self.duration
         other.pitch = self.pitch
         other.start = self.start
-        other.parent_bar = self.parent_bar
         other.modifier = self.modifier
+        other.parent_bar = self.parent_bar
         return other
     
     def to_dict(self):

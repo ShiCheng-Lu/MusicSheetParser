@@ -1,5 +1,6 @@
 import common.music
 from common.label import Bbox
+from editor.pygame_utils import to_pygame_rect
 
 import pygame
 
@@ -16,25 +17,27 @@ PITCH_MAP_LABEL = {
 class Note(common.music.Note):
     def __init__(self, note: common.music.Note):
         note.copy(self)
+        self.renderBox = Bbox()
 
-    def render(self, screen, x, y, scale):
+    def render(self, screen):
         thickness = 3
-
-        render_x = self.x_min * scale + x
-        render_y = self.y_min * scale + y
-        render_w = self.width * scale + thickness
-        render_h = self.height * scale + thickness
 
         text = PITCH_MAP_LABEL[self.pitch_str]
         textRect = text.get_rect()
-        textRect.x = render_x
-        textRect.bottom = render_y
+        textRect.x = self.renderBox.x_min
+        textRect.bottom = self.renderBox.y_min
 
-        pygame.draw.rect(screen, (25, 200, 25), [render_x, render_y, render_w, render_h], thickness)
+        rect = to_pygame_rect(self.renderBox)
+        rect.width += thickness
+        rect.height += thickness
+
+        pygame.draw.rect(screen, (25, 200, 25), rect, thickness)
         screen.blit(text, textRect)
 
-    def update(self):
-        pass
-
-# class Bar(common.music.Bar):
-#     def 
+    def update(self, x, y, scale):
+        self.renderBox.bbox = [
+            self.x_min * scale + x,
+            self.y_min * scale + y,
+            self.x_max * scale + x,
+            self.y_max * scale + y,
+        ]
