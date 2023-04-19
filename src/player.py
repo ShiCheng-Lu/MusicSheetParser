@@ -1,6 +1,6 @@
 import pygame
 import os
-from music import Note, Music, PITCH_MAP
+from common.music import Note, Music, PITCH_MAP
 import time
 import keyboard
 

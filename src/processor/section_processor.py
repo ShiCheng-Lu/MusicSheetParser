@@ -12,15 +12,18 @@ class SectionProcessor:
         cutoff = self.section.y_min
         for a, b in zip(staffs[:-1], staffs[1:]):
             mid = (a.y_max + b.y_min) / 2
-            bar = Label([self.section.x_min, cutoff, self.section.x_max, mid])
+            bar = Label([self.section.x_min, cutoff, self.section.x_max, mid], "bar")
 
-            self.bars.append(BarProcessor(bar, a, []))
-            a.bars.append(BarProcessor(bar, a, []))
+            bar_processor = BarProcessor(bar, a, [])
+            self.bars.append(bar_processor)
+            a.bars.append(bar_processor)
             cutoff = mid
         
-        bar = Label([self.section.x_min, cutoff, self.section.x_max, self.section.y_max])
-        self.bars.append(BarProcessor(bar, staffs[-1], []))
-        staffs[-1].bars.append(bar)
+        bar = Label([self.section.x_min, cutoff, self.section.x_max, self.section.y_max], "bar")
+
+        bar_processor = BarProcessor(bar, staffs[-1], [])
+        self.bars.append(bar_processor)
+        staffs[-1].bars.append(bar_processor)
 
         for bar in self.bars:
             for label in labels:

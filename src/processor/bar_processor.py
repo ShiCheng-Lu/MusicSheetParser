@@ -5,8 +5,9 @@ import math
 
 class BarProcessor(Bar):
     def __init__(self, section: Label, staff: Staff, labels: list[Label]):
+        super().__init__(section.bbox, section.name)
         self.section = section
-        self.staff = staff
+        self.parent_staff = staff
         self.notes: list[NoteProcessor] = []
         self.labels = labels
 
@@ -18,12 +19,11 @@ class BarProcessor(Bar):
     #     staff_center = (self.staff.y_max + self.staff.y_min) / 2
     #     rel_position = round((staff_center - center) / (self.staff.height / 8))
     #     return int(rel_position)
+        # default to clefF
+        if self.parent_staff.clef == None:
+            self.parent_staff.clef = Label([0, 0, 0, 0], "clefF")
 
     def process(self):
-        # default to clefF
-        if self.staff.clef == None:
-            self.staff.clef = Label([0, 0, 0, 0], "clefF")
-
         mods: list[Label] = []
         for label in self.labels:
             if 'notehead' in label.name:
@@ -31,11 +31,11 @@ class BarProcessor(Bar):
                 size_offset = (label.x_max - label.x_min) * 0.05 # extend by 5%
                 label.x_min -= size_offset
                 label.x_max += size_offset
-                self.notes.append(NoteProcessor(label, self.staff.clef, self.staff))
+                self.notes.append(NoteProcessor(label, self.parent_staff.clef, self.parent_staff))
             elif 'rest' in label.name:
-                self.notes.append(NoteProcessor(label, self.staff.clef, self.staff))
+                self.notes.append(NoteProcessor(label, self.parent_staff.clef, self.parent_staff))
             elif 'clef' in label.name:
-                self.staff.clef = label
+                self.parent_staff.clef = label
             elif 'accidental' in label.name:
                 # offset accidentals right to overlap them into the note they are modifying
                 size_offset = (label.x_max - label.x_min)

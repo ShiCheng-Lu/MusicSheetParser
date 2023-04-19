@@ -77,6 +77,7 @@ class Label(Bbox):
             other = Label()
         super().copy(other)
         other.name = self.name
+        return other
     
     def __repr__(self):
         return f"{self.name}"

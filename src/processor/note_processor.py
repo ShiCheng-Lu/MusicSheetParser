@@ -3,6 +3,13 @@ from common.music import Note, TONE_MAP
 from common.label import Label
 
 class NoteProcessor(Note):
+    def __init__(self, label: Label, clef: Label, staff: Label):
+        super().__init__(label.bbox, label.name)
+
+        self.modifiers: list[Label] = []
+        self.clef = clef
+        self.staff = staff
+
     def _rel_position(self, notehead: Label):
         note_center = (notehead.y_min + notehead.y_max) / 2
 
@@ -88,14 +95,6 @@ class NoteProcessor(Note):
         augmentation = sum(mod.name == "augmentationdot" for mod in self.modifiers)
         self.duration = self.duration * (2 - (1 / 2) ** augmentation)
 
-
-    def __init__(self, label: Label, clef: Label, staff: Label):
-        super().__init__(label.bbox, label.name)
-
-        self.modifiers: list[Label] = []
-        self.clef = clef
-        self.staff = staff
-
     def modify(self, labels):
         if type(labels) is Label:
             labels = [labels]
@@ -111,4 +110,4 @@ class NoteProcessor(Note):
         return self
 
     def __repr__(self):
-        return f"{'rest' if self.pitch == None else TONE_MAP[self.pitch]} {self.duration} {self.start_time}"
+        return f"{'rest' if self.pitch == None else TONE_MAP[self.pitch]} {self.duration}"
