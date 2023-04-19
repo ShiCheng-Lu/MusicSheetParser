@@ -44,7 +44,7 @@ class BarProcessor(Bar):
                 mods.append(label)
             elif 'augmentationDot' in label.name:
                 # offset augmentationDot left to overlap the note
-                size_offset = (label.x_max - label.x_min)
+                size_offset = (label.x_max - label.x_min) * 2
                 label.x_min -= size_offset
                 label.x_max -= size_offset
                 mods.append(label)

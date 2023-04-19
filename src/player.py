@@ -1,11 +1,13 @@
 import pygame
 import os
-from common.music import Note, Music, PITCH_MAP
+import common.music
 import time
 import keyboard
 
 pygame.init()
 pygame.mixer.set_num_channels(50)
+
+
 
 class PianoPlayer:
     def __init__(self, dir="asset/notes"):
@@ -18,7 +20,10 @@ class PianoPlayer:
     def playNote(self, note: Note, bpm: int):
         if note.pitch == None: # rest
             return
-        self.notes[PITCH_MAP[note.pitch]].play(0, int(note.duration * 240000 / bpm))
+        self.notes[TONE_MAP[note.semitone]].play(0, int(note.duration * 240000 / bpm))
+
+    def playBar(self, bar: Bar):
+
 
     def play(self, music: Music):
         current_time = 0

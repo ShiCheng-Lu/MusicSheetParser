@@ -92,8 +92,8 @@ class NoteProcessor(Note):
             beam_count = sum('beam' == mod.name for mod in self.modifiers)
             self.duration = 1 / (2 ** (beam_count + 2))
 
-        augmentation = sum(mod.name == "augmentationdot" for mod in self.modifiers)
-        self.duration = self.duration * (2 - (1 / 2) ** augmentation)
+        if any(mod.name == "augmentationDot" for mod in self.modifiers):
+            self.duration = self.duration * 1.5
 
     def modify(self, labels):
         if type(labels) is Label:

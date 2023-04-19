@@ -102,6 +102,7 @@ class Note(Label):
         self.pitch = data["pitch"]
         self.modifier = data["modifier"]
         self.parent_bar = parent_bar
+        return self
     
 
 

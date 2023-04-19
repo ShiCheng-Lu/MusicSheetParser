@@ -4,13 +4,16 @@ import pygame_gui
 from common.label import Bbox
 import common.music
 import editor.pygame_utils as pygame_utils
-from editor.music import Note
+from editor.music import Note, Bar
+import json
 
 w, h = 1080, 860
 menu_rect = Bbox([900, 0, 1080, 860])
 
 class NoteEditorMenu:
-    def __init__(self, manager):
+    def __init__(self, manager, music):
+        self.music = music
+
         self.panel = pygame_gui.elements.UIPanel(relative_rect=pygame_utils.to_pygame_rect(menu_rect))
 
         self.pitch_label = pygame_gui.elements.UILabel(
@@ -54,6 +57,13 @@ class NoteEditorMenu:
             anchors={"top_target": self.duration_label},
             value_range=(0, 32),)
         
+        self.delete_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(0, 0, menu_rect.width, 50),
+            container=self.panel,
+            manager=manager,
+            anchors={'top_target': self.duration_selector},
+            text="Delete Note")
+        
         self.save_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(0, -50, menu_rect.width, 50),
             container=self.panel,
@@ -85,8 +95,17 @@ class NoteEditorMenu:
                 self.update()
         
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
-            if self.selected:
-                pass
-                # self.selected.update(
-                #     self.pitch_selector.selected_option, 
-                #     self.duration_selector.current_value / 32)
+            if event.ui_element == self.delete_button and self.selected:
+                bar: Bar = self.selected.parent_bar
+                bar.delete_note(self.selected)
+                bar.validate()
+            
+            if event.ui_element == self.save_button and self.selected:
+                self.selected.update( 
+                    self.duration_selector.current_value / 32,
+                    self.selected.pitch,
+                    # self.pitch_selector.selected_option,
+                    0)
+
+                with open(f"test2.json", 'w') as f:
+                    f.write(json.dumps(self.music.to_dict()))
