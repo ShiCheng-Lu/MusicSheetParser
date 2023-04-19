@@ -15,10 +15,12 @@ PITCH_MAP_LABEL = {
 }
 
 class Note(common.music.Note):
-    def __init__(self, note: common.music.Note):
+    def __init__(self, note: common.music.Note, parent_bar):
         note.copy(self)
+        self.parent_bar = parent_bar
 
         self.renderBox = Bbox()
+        self.render_color = (25, 200, 25)
 
     def render(self, screen, x, y, scale):
         thickness = 3
@@ -39,7 +41,7 @@ class Note(common.music.Note):
         rect.width += thickness
         rect.height += thickness
 
-        pygame.draw.rect(screen, (25, 200, 25), rect, thickness)
+        pygame.draw.rect(screen, self.render_color, rect, thickness)
         screen.blit(text, textRect)
 
     def update(self, duration, pitch, modifier):
@@ -53,14 +55,55 @@ class Note(common.music.Note):
 class Bar(common.music.Bar):
     def __init__(self, bar: common.music.Bar):
         bar.copy(self)
-        self.notes: list[Note] = [Note(note) for note in self.notes]
+        self.notes: list[Note] = [Note(note, self) for note in self.notes]
+
+        self.valid = False
+        self.validate()
 
     def validate(self):
-        pass
+        duration = 0
+
+        self.notes.sort(key=lambda x: x.x_min)
+
+        group_duration = 0
+        group_x_end = 0
+        for note in self.notes:
+            if note.x_min > group_x_end:
+                # new group
+                duration += group_duration
+                group_x_end = note.x_max
+                group_duration = note.duration
+            else:
+                group_duration = max(group_duration, note.duration)
+                group_x_end = max(group_x_end, note.x_max)
+        duration += group_duration
+
+        self.valid = (duration == 0.75) # TODO: use music time sig
+
 
     def render(self, screen, x, y, scale):
         for note in self.notes:
             note.render(screen, x, y, scale)
+        
+        # don't outline if its valid
+        if self.valid:
+            return
+
+        thickness = 3
+        renderBox = Bbox([
+            self.x_min * scale + x,
+            self.y_min * scale + y,
+            self.x_max * scale + x,
+            self.y_max * scale + y,
+        ])
+
+        rect = to_pygame_rect(renderBox)
+
+        pygame.draw.rect(screen, (200, 25, 25), rect, thickness)
+    
+    def delete_note(self, note):
+        self.notes.remove(note)
+        
 
 class Staff(common.music.Staff):
     def __init__(self, staff: common.music.Staff):
@@ -87,4 +130,3 @@ class Music(common.music.Music):
             for bar in staff.bars:
                 notes.extend(bar.notes)
         return notes
-        

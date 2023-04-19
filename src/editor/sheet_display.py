@@ -12,7 +12,7 @@ class SheetDisplay:
         self.scale = 1
         self.image = image
         self.image_rect = image.get_rect()
-        self.notes: list[Note] = music.notes
+
         self.music = music
         self.on_selected_note = on_select_note
 
@@ -73,12 +73,16 @@ class SheetDisplay:
         if event.type == pygame.MOUSEBUTTONUP and event.button == pygame.BUTTON_LEFT and not self.moved:
             mouse_pos = Bbox(event.pos * 2)
             selected = None
-            for note in self.notes:
-                if mouse_pos.intersects(note.renderBox):
-                    selected = note
-                note.renderColour = (25, 200, 25)
+            
+            for staff in self.music.staffs:
+                for bar in staff.bars:
+                    for note in bar.notes:
+                        if mouse_pos.intersects(note.renderBox):
+                            selected = note
+                        note.render_color = (25, 200, 25)
+            
             if selected != None:
-                selected.renderColour = (200, 150, 25)
+                selected.render_color = (200, 150, 25)
             if self.on_selected_note:
                 self.on_selected_note(selected)
             self.render()
