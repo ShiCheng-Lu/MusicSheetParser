@@ -39,6 +39,11 @@ def test_processor():
     labels = [Label(x['bbox'], x['name']) for x in labels]
 
     parser = MusicParser2(labels, "sheets/genshin main theme.png")
+    parser.process()
+
+    with open(f"test2.json", 'w') as f:
+        f.write(json.dumps(parser.to_dict()))
+
 
     # boxes = [note.label.bbox for note in parser.notes]
     # labels = [note.label.name if note.pitch == None else music.PITCH_MAP[note.pitch] for note in parser.notes]
@@ -47,13 +52,12 @@ def test_processor():
     
     import pygame
     import pygame_gui
-    from editor.music import Note
+    from editor.music import Music
     from editor.selction_gui import NoteEditorMenu
     from editor.sheet_display import SheetDisplay
     import json
 
-    parser.process()
-    notes = [Note(note) for note in parser.notes]
+    # notes = [Note(note) for note in parser.notes]
 
     pygame.init()
     w, h = 1080, 860
@@ -65,7 +69,7 @@ def test_processor():
 
     manager = pygame_gui.UIManager((w, h))
     menu = NoteEditorMenu(manager)
-    display = SheetDisplay(manager, img, notes, menu.set_selected)
+    display = SheetDisplay(manager, img, Music(parser), menu.set_selected)
 
     clock = pygame.time.Clock()
     while running:

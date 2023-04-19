@@ -1,18 +1,19 @@
 import pygame
 import pygame_gui
 from common.label import Bbox
-from editor.music import Note
+from editor.music import Note, Music
 
 w, h = 1080, 860
 # menu_rect = Bbox([900, 0, 1080, 860])
 
 class SheetDisplay:
-    def __init__(self, manager, image, notes, on_select_note):
+    def __init__(self, manager, image, music: Music, on_select_note):
         self.surface = pygame.Surface((900, h))
         self.scale = 1
         self.image = image
         self.image_rect = image.get_rect()
-        self.notes: list[Note] = notes
+        self.notes: list[Note] = music.notes
+        self.music = music
         self.on_selected_note = on_select_note
 
         self.display_image = pygame_gui.elements.UIImage(
@@ -31,10 +32,7 @@ class SheetDisplay:
             (self.image_rect.width * self.scale, self.image_rect.height * self.scale))
         self.surface.fill((0, 0, 0))
         self.surface.blit(display_img, self.image_rect)
-        for note in self.notes:
-            note.update(self.image_rect.x, self.image_rect.y, self.scale)
-            note.render(self.surface)
-
+        self.music.render(self.surface, self.image_rect.x, self.image_rect.y, self.scale)
         self.display_image.set_image(self.surface)
 
     def process_event(self, event):

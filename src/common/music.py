@@ -82,21 +82,21 @@ class Note(Label):
         if other == None:
             other = Note()
         super().copy(other)
+        other.parent_bar = self.parent_bar
         other.duration = self.duration
         other.pitch = self.pitch
         other.start = self.start
         other.modifier = self.modifier
-        other.parent_bar = self.parent_bar
         return other
     
     def to_dict(self):
-        return super().to_dict().update({
+        return super().to_dict() | {
             "pitch": self.pitch,
             "duration": self.duration,
             "modifier": self.modifier
-        })
+        }
     
-    def from_dict(self, data, parent_bar):
+    def from_dict(self, data, parent_bar=None):
         super().from_dict(data)
         self.duration = data["duration"]
         self.pitch = data["pitch"]
@@ -109,12 +109,14 @@ class Bar(Label):
     def __init__(self, bbox=None, name=None):
         super().__init__(bbox, name)
         self.parent_staff = None
+        self.notes: list[Note] = []
     
     def copy(self, other=None):
         if other == None:
             other = Bar()
         super().copy(other)
         other.parent_staff = self.parent_staff
+        other.notes = [note.copy() for note in self.notes]
         return other
 
     def to_dict(self):
@@ -122,9 +124,9 @@ class Bar(Label):
             "notes": [note.to_dict() for note in self.notes],
         }
     
-    def from_dict(self, data, parent_staff):
+    def from_dict(self, data, parent_staff=None):
         super().from_dict(data)
-        self.notes = [Note().from_dict(note) for note in data['notes']]
+        self.notes = [Note().from_dict(note, self) for note in data['notes']]
         self.parent_staff = parent_staff
         return self
 
@@ -162,12 +164,14 @@ class Music:
     def __init__(self):
         self.staffs: list[Staff] = []
         self.group: int = None
+        self.bpm: int = 100
+        self.time_sig: list[int] = [4, 4]
     
     def copy(self, other=None):
         if other == None:
             other = Music()
         other.staffs = [staff.copy() for staff in self.staffs]
-        other.group = other.group
+        other.group = self.group
     
     def to_dict(self):
         return {
