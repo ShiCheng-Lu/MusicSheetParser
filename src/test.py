@@ -1,9 +1,12 @@
 from processor.staff_utils import *
-
-# only import if script is ran directly, these imports are quite slow
 import matplotlib.pyplot as plt
 import torch
 from torchvision.utils import draw_bounding_boxes
+import json
+from model.model import MusicSymbolDetector
+import processor.staff_utils
+from processor.processor import MusicParser2
+import json
 
 def test_staff_utils():
     img = cv2.imread("sheets/genshin main theme.png", cv2.IMREAD_GRAYSCALE)
@@ -30,18 +33,41 @@ def test_staff_utils():
     plt.show()
 
 def test_processor():
-    from processor.processor import MusicParser2
-    import json
-
-    with open(f"nggup2.json") as f:
-        labels = json.load(f)
-    
-    labels = [Label(x['bbox'], x['name']) for x in labels]
-
-    parser = MusicParser2(labels, "sheets/genshin main theme.png")
+    parser = MusicParser2("sheets/genshin main theme.png")
     parser.process()
 
     with open(f"test2.json", 'w') as f:
+        f.write(json.dumps(parser.to_dict()))
+
+def test_section_detect():
+    
+    with open(f"category.json") as f:
+        categories = json.load(f)
+    
+    detector = MusicSymbolDetector()
+    detector.load("saved_models_bars/10")
+
+    labels: list[Label] = []
+
+    image = cv2.imread("sheets/genshin main theme.png", cv2.IMREAD_GRAYSCALE)
+    for section in processor.staff_utils.section(image):
+        image_section = image[section.y_min:section.y_max, section.x_min:section.x_max]
+        res = detector(torch.tensor(image_section).div(255).unsqueeze(0))
+        labels.extend(res)
+
+        for label in res:
+            label.name = categories[str(label.name)]["name"]
+        
+        boxes = [label.bbox for label in res]
+        labels = [label.name for label in res]
+
+        plt.imshow(draw_bounding_boxes(torch.tensor(image_section).unsqueeze(0), torch.tensor(boxes), labels).moveaxis(0, 2))
+        plt.show()
+    
+    parser = MusicParser2(labels, "sheets/genshin main theme.png")
+    parser.process()
+
+    with open(f"test3.json", 'w') as f:
         f.write(json.dumps(parser.to_dict()))
 
 test_processor()

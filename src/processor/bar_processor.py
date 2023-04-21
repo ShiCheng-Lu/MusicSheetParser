@@ -2,33 +2,27 @@ from common.label import Bbox, Label
 from common.music import Bar, Staff
 from processor.note_processor import NoteProcessor
 import math
+import processor.staff_utils
 
 class BarProcessor(Bar):
-    def __init__(self, section: Label, staff: Staff, labels: list[Label]):
+    def __init__(self, section: Label, staff: Staff):
         super().__init__(section.bbox, section.name)
         self.section = section
         self.parent_staff = staff
         self.notes: list[NoteProcessor] = []
-        self.labels = labels
+        self.labels: list[Label] = []
 
-    # def rel_position(self, bbox: Bbox):
-    #     '''
-    #     get the relative position of a bbox based on the center of the bbox and the staff
-    #     '''
-    #     center = (bbox.y_min + bbox.y_max) / 2
-    #     staff_center = (self.staff.y_max + self.staff.y_min) / 2
-    #     rel_position = round((staff_center - center) / (self.staff.height / 8))
-    #     return int(rel_position)
-        # default to clefF
         if self.parent_staff.clef == None:
             self.parent_staff.clef = Label([0, 0, 0, 0], "clefF")
-
+    
     def process(self):
+        self.labels.sort(key=lambda x: x.x_min)
+
         mods: list[Label] = []
         for label in self.labels:
             if 'notehead' in label.name:
                 # make noteheads a little larger for better modifier detection
-                size_offset = (label.x_max - label.x_min) * 0.05 # extend by 5%
+                size_offset = (label.x_max - label.x_min) * 0.1 # extend by 5%
                 label.x_min -= size_offset
                 label.x_max += size_offset
                 self.notes.append(NoteProcessor(label, self.parent_staff.clef, self.parent_staff))
@@ -37,10 +31,8 @@ class BarProcessor(Bar):
             elif 'clef' in label.name:
                 self.parent_staff.clef = label
             elif 'accidental' in label.name:
-                # offset accidentals right to overlap them into the note they are modifying
-                size_offset = (label.x_max - label.x_min)
-                label.x_min += size_offset
-                label.x_max += size_offset
+                # accidentals apply to the entire bar
+                label.x_max = math.inf
                 mods.append(label)
             elif 'augmentationDot' in label.name:
                 # offset augmentationDot left to overlap the note
@@ -49,18 +41,37 @@ class BarProcessor(Bar):
                 label.x_max -= size_offset
                 mods.append(label)
             elif 'key' in label.name:
-                label.x_min = 0
-                label.x_max = math.inf
-                mods.append(label)
-            elif any(mod_name in label.name for mod_name in ['flag', 'beam', 'slur', 'tie']):
-                label.y_min = 0
-                label.y_max = math.inf
-                mods.append(label)
+                # add key to staff
+                match label.name:
+                    case 'keyFlat':
+                        key = -1
+                    case 'keySharp':
+                        key = 1
+                    case 'keyNatural':
+                        key = 0
+                pitch = processor.staff_utils.pitch_from_pos(self.parent_staff, label)
+                self.parent_staff.keys[pitch % 7] = key
             else:
                 mods.append(label)
         
         for mod in mods:
             for note in self.notes:
+                if mod.name == 'beam':
+                    mod = mod.copy()
+                    if mod.y_min > note.y_max:
+                        mod.x_max += self.parent_staff.height / 8
+                    elif mod.y_max < note.y_min:
+                        mod.x_min -= self.parent_staff.height / 8
+                    mod.y_min = 0
+                    mod.y_max = math.inf
+                
+                if 'flag' in mod.name:
+                    mod = mod.copy()
+                    if mod.y_min > note.y_min:
+                        mod.move(-self.parent_staff.height / 8, 0)
+                    mod.y_min = 0
+                    mod.y_max = math.inf
+
                 if mod.intersects(note):
                     note.modify(mod)
         

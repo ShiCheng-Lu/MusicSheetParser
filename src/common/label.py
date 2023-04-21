@@ -51,6 +51,21 @@ class Bbox:
         ]
         return result
     
+    def move(self, x, y, result=None):
+        if result == None:
+            result = self
+        
+        result.bbox = [
+            self.x_min + x,
+            self.y_min + y,
+            self.x_max + x,
+            self.y_max + y,
+        ]
+        return result
+    
+    def valid(self):
+        return self.x_max >= self.x_min and self.y_max >= self.y_min
+    
     def copy(self, other=None):
         if other == None:
             other = Bbox()

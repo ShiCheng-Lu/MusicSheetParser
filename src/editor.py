@@ -4,11 +4,10 @@ Editor bounding boxes
 
 import pygame
 import pygame_gui
-import common.music
 from editor.music import Music
 from editor.selction_gui import NoteEditorMenu
 from editor.sheet_display import SheetDisplay
-import json
+from processor.processor import MusicParser2
 
 # notes = [Note(note) for note in parser.notes]
 
@@ -20,9 +19,10 @@ running = True
 img = pygame.image.load("sheets/genshin main theme.png")
 img.convert()
 
-with open(f"test2.json") as f:
-    music = common.music.Music().from_dict(json.load(f))
-music = Music(music)
+parser = MusicParser2("sheets/genshin main theme.png")
+parser.process()
+
+music = Music(parser)
 
 manager = pygame_gui.UIManager((w, h))
 menu = NoteEditorMenu(manager, music)
