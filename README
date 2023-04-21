@@ -1,3 +1,10 @@
 Almost Reliable Music Object Detection
 
 dataset from https://doi.org/10.21256/zhaw-20647
+
+parser:
+1. extract staff and bars using image processing techniques
+2. use FasterRCNN object detection on each bar to 
+3. process labels by their BBox and return notes
+
+TODO: get time signature

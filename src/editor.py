@@ -8,25 +8,40 @@ from editor.music import Music
 from editor.selction_gui import NoteEditorMenu
 from editor.sheet_display import SheetDisplay
 from processor.processor import MusicParser2
-
-# notes = [Note(note) for note in parser.notes]
+import common.music
+import json
 
 pygame.init()
 w, h = 1080, 860
 screen = pygame.display.set_mode((w, h))
 running = True
 
-img = pygame.image.load("sheets/genshin main theme.png")
+# file = "sheets/bohemia rhapsody.png"
+# file = "sheets/genshin main theme.png"
+# file = "sheets/imagine john lennon.png"
+file = "sheets/never gonna give you up.png"
+
+img = pygame.image.load(file)
 img.convert()
 
-parser = MusicParser2("sheets/genshin main theme.png")
+parser = MusicParser2(file)
 parser.process()
+
+# import json
+# with open(f"test.json") as f:
+#     parser = common.music.Music().from_dict(json.load(f))
 
 music = Music(parser)
 
 manager = pygame_gui.UIManager((w, h))
 menu = NoteEditorMenu(manager, music)
 display = SheetDisplay(manager, img, music, menu.set_selected)
+
+def save_and_update():
+    with open(f"test.json", 'w') as f:
+        f.write(json.dumps(music.to_dict()))
+    display.render()
+menu.on_update = save_and_update
 
 clock = pygame.time.Clock()
 while running:

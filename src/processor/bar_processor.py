@@ -49,26 +49,30 @@ class BarProcessor(Bar):
                         key = 1
                     case 'keyNatural':
                         key = 0
+                    case _:
+                        continue # keyboardPedalPad, ignored
                 pitch = processor.staff_utils.pitch_from_pos(self.parent_staff, label)
                 self.parent_staff.keys[pitch % 7] = key
             else:
                 mods.append(label)
         
         for mod in mods:
+            mod_orig = mod
             for note in self.notes:
-                if mod.name == 'beam':
-                    mod = mod.copy()
+                mod = mod_orig
+                if mod_orig.name == 'beam':
+                    mod = mod_orig.copy()
                     if mod.y_min > note.y_max:
-                        mod.x_max += self.parent_staff.height / 8
+                        mod.move(self.parent_staff.height / 8, 0)
                     elif mod.y_max < note.y_min:
-                        mod.x_min -= self.parent_staff.height / 8
+                        mod.move(-self.parent_staff.height / 8, 0)
                     mod.y_min = 0
                     mod.y_max = math.inf
                 
-                if 'flag' in mod.name:
-                    mod = mod.copy()
-                    if mod.y_min > note.y_min:
-                        mod.move(-self.parent_staff.height / 8, 0)
+                if 'flag' in mod_orig.name:
+                    mod = mod_orig.copy()
+                    if mod.y_min < note.y_min:
+                        mod.move(- self.parent_staff.height / 8, 0)
                     mod.y_min = 0
                     mod.y_max = math.inf
 

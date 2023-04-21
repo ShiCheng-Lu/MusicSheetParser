@@ -40,7 +40,7 @@ Music data structure
 
 from common.label import Label
 
-TONE_MAP = [ # range: -48 to +39 relative to A4
+SEMITONE_MAP = [ # range: -48 to +39 relative to A4
     "A4", "Bb4", "B4", "C5", "Db5", "D5", "Eb5", "E5", "F5", "Gb5", "G5", "Ab5",
     "A5", "Bb5", "B5", "C6", "Db6", "D6", "Eb6", "E6", "F6", "Gb6", "G6", "Ab6",
     "A6", "Bb6", "B6", "C7", "Db7", "D7", "Eb7", "E7", "F7", "Gb7", "G7", "Ab7",
@@ -59,7 +59,7 @@ class Note(Label):
         self.pitch: int = 0
         self.start: float = 0
         self.modifier: int = 0 # +1/-1 for sharp or flat
-        self.parent_bar = None # Bar
+        self.parent_bar: Bar = None # Bar
     
     @property
     def semitone(self):
@@ -72,11 +72,14 @@ class Note(Label):
             case 4: semitone += 7
             case 5: semitone += 8
             case 6: semitone += 10
-        return semitone + self.modifier
+        if self.modifier != None:
+            return semitone + self.modifier
+        else:
+            return semitone + self.parent_bar.parent_staff.keys[self.pitch % 7]
     
     @property
     def pitch_str(self):
-        return 'rest' if 'rest' in self.name else TONE_MAP[self.semitone]
+        return 'rest' if 'rest' in self.name else SEMITONE_MAP[self.semitone]
     
     def copy(self, other=None):
         if other == None:
@@ -103,13 +106,12 @@ class Note(Label):
         self.modifier = data["modifier"]
         self.parent_bar = parent_bar
         return self
-    
 
 
 class Bar(Label):
     def __init__(self, bbox=None, name=None):
         super().__init__(bbox, name)
-        self.parent_staff = None
+        self.parent_staff: Staff = None
         self.notes: list[Note] = []
     
     def copy(self, other=None):
@@ -134,7 +136,7 @@ class Bar(Label):
 class Staff(Label):
     def __init__(self, bbox=None, name=None):
         super().__init__(bbox, name)
-        self.keys: list[int] = [0, 0, 0, 0, 0, 0, 0]
+        self.keys: list[int] = [0 for _ in range(7)]
         self.clef: Label = None
         self.bars: list[Bar] = []
     
@@ -165,7 +167,7 @@ class Music:
     def __init__(self):
         self.staffs: list[Staff] = []
         self.group: int = None
-        self.bpm: int = 100
+        self.bpm: int = 80
         self.time_sig: list[int] = [4, 4]
     
     def copy(self, other=None):
@@ -173,16 +175,20 @@ class Music:
             other = Music()
         other.staffs = [staff.copy() for staff in self.staffs]
         other.group = self.group
+        other.bpm = self.bpm
+        other.time_sig = self.time_sig
     
     def to_dict(self):
         return {
             "staffs": [staff.to_dict() for staff in self.staffs],
             "group": self.group,
+            "bpm": self.bpm,
         }
     
     def from_dict(self, data):
         self.staffs = [Staff().from_dict(data) for data in data["staffs"]]
         self.group = data["group"]
+        self.bpm = data["bpm"]
         return self
 
 def display_duration(duration: float):

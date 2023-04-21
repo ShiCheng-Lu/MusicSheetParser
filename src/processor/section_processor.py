@@ -18,6 +18,7 @@ class SectionProcessor:
         self.section = section
         self.bars: list[BarProcessor] = []
         self.parent = parent
+        self.staff_height = staffs[0].height
 
         # split the section into bars by staffs
         cutoff = self.section.y_min
@@ -53,7 +54,7 @@ class SectionProcessor:
         # for label in labels:
 
             # weird beams
-            if label.name == "beam" and label.height >= self.section.height / 3:
+            if label.name == "beam" and label.height >= self.staff_height:
                 continue
 
             label.move(self.section.x_min, self.section.y_min)
