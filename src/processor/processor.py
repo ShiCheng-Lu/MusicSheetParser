@@ -16,9 +16,8 @@ Parser:
 '''
 
 class MusicParser2(Music):
-    def __init__(self, labels: list[Label], name):
+    def __init__(self, name):
         super().__init__()
-        self.labels = labels
         self.image = cv2.imread(name, cv2.IMREAD_GRAYSCALE)
 
         self.sections: list[SectionProcessor] = []
@@ -26,15 +25,11 @@ class MusicParser2(Music):
         self.staffs = staff_utils.get_staffs(self.image)
 
         for section in staff_utils.section(self.image):
-            section_labels = []
             section_staffs = []
-            for label in self.labels:
-                if label.intersects(section):
-                    section_labels.append(label)
             for staff in self.staffs:
                 if staff.intersects(section):
                     section_staffs.append(staff)
-            self.sections.append(SectionProcessor(section, section_staffs, section_labels))
+            self.sections.append(SectionProcessor(section, section_staffs, self))
 
             if self.group == None:
                 self.group = len(section_staffs)

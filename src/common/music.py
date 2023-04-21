@@ -134,7 +134,7 @@ class Bar(Label):
 class Staff(Label):
     def __init__(self, bbox=None, name=None):
         super().__init__(bbox, name)
-        self.keys: list[int] = []
+        self.keys: list[int] = [0, 0, 0, 0, 0, 0, 0]
         self.clef: Label = None
         self.bars: list[Bar] = []
     

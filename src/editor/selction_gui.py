@@ -107,5 +107,7 @@ class NoteEditorMenu:
                     # self.pitch_selector.selected_option,
                     0)
 
+                print("saved")
+
                 with open(f"test2.json", 'w') as f:
                     f.write(json.dumps(self.music.to_dict()))

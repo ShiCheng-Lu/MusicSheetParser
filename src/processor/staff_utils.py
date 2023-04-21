@@ -104,8 +104,8 @@ def vertical_section(img: cv2.Mat) -> list[Label]:
 
     # median y of the brightest rows
     cutoffs = []
-    low = staffs[0].y_min - staffs[0].height * 2
-    high = staffs[-1].y_max + staffs[-1].height * 2
+    low = max(staffs[0].y_min - staffs[0].height * 2, 0)
+    high = min(staffs[-1].y_max + staffs[-1].height * 2, height)
     for staff in staffs + [Bbox([0, high, 0, 0])]:
         high = staff.y_min
         # find median y of the brightest rows
@@ -132,7 +132,7 @@ def vertical_section(img: cv2.Mat) -> list[Label]:
 
 import math
 
-def section(img: cv2.Mat):
+def section(img: cv2.Mat) -> list[Label]:
     width = img.shape[1]
     height = img.shape[0]
 
@@ -161,3 +161,24 @@ def section(img: cv2.Mat):
             sections.append(Label([x_min.x_max, section.y_min, x_max.x_min, section.y_max], "section"))
 
     return sections
+
+def pitch_from_pos(staff: Staff, bbox: Bbox):
+    '''
+    get the relative position of a bbox based on the center of the bbox and the staff
+    '''
+    center = (bbox.y_min + bbox.y_max) / 2
+    staff_center = (staff.y_max + staff.y_min) / 2
+    rel_position = round((staff_center - center) / (staff.height / 8))
+    
+    # offset rel_position to number of lines from A4 (tuned at 440Hz)
+    match staff.clef.name:
+        case 'clefG': # treble clef
+            rel_position += 1
+        case 'clefCAlto':
+            rel_position -= 5
+        case 'clefCTenor':
+            rel_position -= 7
+        case 'clefF': # base clef
+            rel_position -= 11
+
+    return int(rel_position)
