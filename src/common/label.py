@@ -69,7 +69,7 @@ class Bbox:
     def copy(self, other=None):
         if other == None:
             other = Bbox()
-        other.bbox = self.bbox.copy()
+        other.bbox = self.bbox
         return other
     
     def area(self):

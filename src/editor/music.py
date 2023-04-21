@@ -9,7 +9,7 @@ font = pygame.font.Font('freesansbold.ttf', 20)
 
 PITCH_MAP_LABEL = {
     pitch : font.render(pitch, True, (25, 25, 255))
-    for pitch in common.music.TONE_MAP
+    for pitch in common.music.SEMITONE_MAP
 } | {
     'rest': font.render("rest", True, (25, 25, 255))
 }
@@ -76,7 +76,7 @@ class Bar(common.music.Bar):
                 group_x_end = max(group_x_end, note.x_max)
         duration += group_duration
 
-        self.valid = (duration == 0.75) or (duration == 1.5) # TODO: use music time sig
+        self.valid = (duration == 1) or (duration == 2) # TODO: use music time sig
 
 
     def render(self, screen, x, y, scale):

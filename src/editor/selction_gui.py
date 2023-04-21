@@ -7,12 +7,27 @@ import editor.pygame_utils as pygame_utils
 from editor.music import Note, Bar
 import json
 
+TONE_MAP = [
+    "A0", "B0", "C1", "D1", "E1", "F1", "G1",
+    "A1", "B1", "C2", "D2", "E2", "F2", "G2",
+    "A2", "B2", "C3", "D3", "E3", "F3", "G3",
+    "A3", "B3", "C4", "D4", "E4", "F4", "G4",
+    "A4", "B4", "C5", "D5", "E5", "F5", "G5",
+    "A5", "B5", "C6", "D6", "E6", "F6", "G6",
+    "A6", "B6", "C7", "D7", "E7", "F7", "G7",
+    "A7", "B7",
+]
+A4_POS = TONE_MAP.index("A4")
+
+MOD_MAP = {"None": None, "Natural": 0, "Sharp": 1, "Flat": -1, "DoubleSharp": 2, "DoubleFlat": -2}
+
 w, h = 1080, 860
 menu_rect = Bbox([900, 0, 1080, 860])
 
 class NoteEditorMenu:
-    def __init__(self, manager, music):
+    def __init__(self, manager, music, on_update=None):
         self.music = music
+        self.on_update = on_update
 
         self.panel = pygame_gui.elements.UIPanel(relative_rect=pygame_utils.to_pygame_rect(menu_rect))
 
@@ -26,7 +41,7 @@ class NoteEditorMenu:
             container=self.panel,
             manager=manager,
             anchors={"top_target": self.pitch_label},
-            options_list=common.music.TONE_MAP,
+            options_list=common.music.SEMITONE_MAP,
             starting_option="A4",)
         
         self.modifier_label = pygame_gui.elements.UILabel(
@@ -40,7 +55,7 @@ class NoteEditorMenu:
             container=self.panel,
             manager=manager,
             anchors={"top_target": self.modifier_label},
-            options_list=["None", "Sharp", "Flat", "DoubleSharp", "DoubleFlat"],
+            options_list=MOD_MAP,
             starting_option="None",)
 
         self.duration_label = pygame_gui.elements.UILabel(
@@ -76,9 +91,10 @@ class NoteEditorMenu:
     def set_selected(self, note: Note):
         self.selected = note
         if note:
+            tone = TONE_MAP[note.pitch + A4_POS]
             # set pitch selector
-            self.pitch_selector.selected_option = note.name
-            self.pitch_selector.current_state.selected_option = note.name
+            self.pitch_selector.selected_option = tone
+            self.pitch_selector.current_state.selected_option = tone
             self.pitch_selector.current_state.start()
 
             # set duration selector
@@ -103,11 +119,8 @@ class NoteEditorMenu:
             if event.ui_element == self.save_button and self.selected:
                 self.selected.update( 
                     self.duration_selector.current_value / 32,
-                    self.selected.pitch,
-                    # self.pitch_selector.selected_option,
-                    0)
+                    TONE_MAP.index(self.pitch_selector.selected_option) - A4_POS,
+                    MOD_MAP[self.modifier_selector.selected_option])
 
-                print("saved")
-
-                with open(f"test2.json", 'w') as f:
-                    f.write(json.dumps(self.music.to_dict()))
+            if self.on_update != None:
+                self.on_update()

@@ -9,7 +9,7 @@ from processor.processor import MusicParser2
 import json
 
 def test_staff_utils():
-    img = cv2.imread("sheets/genshin main theme.png", cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread("sheets/bohemia rhapsody.png", cv2.IMREAD_GRAYSCALE)
     width = img.shape[1]
     bars = section(img)
 

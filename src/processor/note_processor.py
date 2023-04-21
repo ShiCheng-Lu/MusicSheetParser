@@ -1,13 +1,14 @@
 import re
-from common.music import Note, TONE_MAP
+from common.music import Note, Staff, Bar, SEMITONE_MAP
 from common.label import Label
 
 class NoteProcessor(Note):
-    def __init__(self, label: Label, clef: Label, staff: Label):
+    def __init__(self, label: Label, parent_bar: Bar, staff: Staff):
         super().__init__(label.bbox, label.name)
+        self.parent_bar = parent_bar
 
         self.modifiers: list[Label] = []
-        self.clef = clef
+        self.clef = staff.clef
         self.staff = staff
 
     def _rel_position(self, notehead: Label):
@@ -110,4 +111,4 @@ class NoteProcessor(Note):
         return self
 
     def __repr__(self):
-        return f"{'rest' if self.pitch == None else TONE_MAP[self.pitch]} {self.duration}"
+        return f"{'rest' if self.pitch == None else SEMITONE_MAP[self.pitch]} {self.duration}"

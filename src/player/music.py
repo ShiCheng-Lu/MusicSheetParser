@@ -1,5 +1,6 @@
 import common.music
 import time
+import threading
 
 class MusicPlayer:
     def __init__(self, bpm=None):
@@ -53,12 +54,15 @@ class Bar(common.music.Bar):
         # return self.next_note_time
 
 class Staff(common.music.Staff):
-    def __init__(self, staff: common.music.Staff):
+    def __init__(self, staff: common.music.Staff, parent):
         staff.copy(self)
         self.bars: list[Bar] = [Bar(bar) for bar in self.bars]
+        self.parent = parent
     
     def play(self, player: MusicPlayer):
         for bar in self.bars:
+            self.parent.bar_sem.wait()
+
             duration = bar.play(0, player)
             player.wait(duration)
             while duration != 0:
@@ -72,12 +76,27 @@ class Staff(common.music.Staff):
 class Music(common.music.Music):
     def __init__(self, music: common.music.Music):
         music.copy(self)
-        self.staffs: list[Staff] = [Staff(staff) for staff in self.staffs]
+        self.staffs: list[Staff] = [Staff(staff, self) for staff in self.staffs]
+
+        self.bar_sem = threading.Barrier(self.group)
+        self.staff_sem = threading.Barrier(self.group)
+
+        self.playing_threads: list[threading.Thread] = []
     
+    def play_staffs(self, staffs, player):
+        for staff in staffs:
+            self.staff_sem.wait()
+            staff.play(player)
+
     def play(self, player):
+        staff_groups = [[] for _ in range(self.group)]
         for index, staff in enumerate(self.staffs):
-            if index % 2 == 0:
-                staff.play(player)
+            staff_groups[index % self.group].append(staff)
+        for staffs in staff_groups:
+            thread = threading.Thread(target=self.play_staffs, args=(staffs, player))
+            self.playing_threads.append(thread)
+        for thread in self.playing_threads:
+            thread.start()
 
         # for start in range(0, len(self.staffs), self.group):
         #     end = start + self.group
