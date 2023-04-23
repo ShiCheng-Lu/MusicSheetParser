@@ -79,7 +79,16 @@ class Note(Label):
     
     @property
     def pitch_str(self):
-        return 'rest' if 'rest' in self.name else SEMITONE_MAP[self.semitone]
+        if 'rest' in self.name:
+            return 'rest'
+        string = chr(ord('A') + self.pitch % 7)
+        string += str(self.pitch // 7 + 4)
+        match self.modifier:
+            case -2: string += 'bb'
+            case -1: string += 'b'
+            case  1: string += '#'
+            case  2: string += 'x'
+        return string
     
     def copy(self, other=None):
         if other == None:
@@ -189,12 +198,14 @@ class Music:
             "staffs": [staff.to_dict() for staff in self.staffs],
             "group": self.group,
             "bpm": self.bpm,
+            "time_sig": self.time_sig
         }
     
     def from_dict(self, data):
         self.staffs = [Staff().from_dict(data, self) for data in data["staffs"]]
         self.group = data["group"]
         self.bpm = data["bpm"]
+        self.time_sig = data["time_sig"]
         return self
 
 def display_duration(duration: float):

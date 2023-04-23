@@ -7,7 +7,6 @@ import pygame_gui
 from editor.music import Music
 from editor.selction_gui import NoteEditorMenu
 from editor.sheet_display import SheetDisplay
-from processor.processor import MusicParser
 import common.music
 import json
 
@@ -24,12 +23,13 @@ file = "sheets/genshin main theme.png"
 img = pygame.image.load(file)
 img.convert()
 
-parser = MusicParser(file)
-parser.process()
+# from processor.music_processor import MusicParser
+# parser = MusicParser(file)
+# parser.process()
 
-# import json
-# with open(f"test.json") as f:
-#     parser = common.music.Music().from_dict(json.load(f))
+import json
+with open(f"test.json") as f:
+    parser = common.music.Music().from_dict(json.load(f))
 
 music = Music(parser)
 

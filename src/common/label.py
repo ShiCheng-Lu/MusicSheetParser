@@ -63,6 +63,18 @@ class Bbox:
         ]
         return result
     
+    def scale(self, scale_x, scale_y, result=None):
+        if result == None:
+            result = self
+        
+        result.bbox = [
+            self.x_min * scale_x,
+            self.y_min * scale_y,
+            self.x_max * scale_x,
+            self.y_max * scale_y,
+        ]
+        return result
+    
     def valid(self):
         return self.x_max >= self.x_min and self.y_max >= self.y_min
     
