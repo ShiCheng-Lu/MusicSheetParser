@@ -87,6 +87,12 @@ class Bbox:
     def area(self):
         return (self.x_max - self.x_min) * (self.y_max - self.y_min)
     
+    def contains(self, x, y):
+        return (self.x_max >= x and
+                self.x_min <= x and
+                self.y_max >= y and
+                self.y_min <= y)
+
     def to_dict(self):
         return self.bbox
     

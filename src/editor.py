@@ -5,10 +5,21 @@ Editor bounding boxes
 import pygame
 import pygame_gui
 from editor.music import Music
-from editor.selction_gui import NoteEditorMenu
+from editor.selction_gui import EditorMenu
 from editor.sheet_display import SheetDisplay
 import common.music
 import json
+
+
+# from processor.music_processor import MusicParser
+# parser = MusicParser(file)
+# parser.process()
+
+import json
+with open(f"test.json") as f:
+    parser = common.music.Music().from_dict(json.load(f))
+
+music = Music(parser)
 
 pygame.init()
 w, h = 1080, 860
@@ -23,19 +34,11 @@ file = "sheets/genshin main theme.png"
 img = pygame.image.load(file)
 img.convert()
 
-# from processor.music_processor import MusicParser
-# parser = MusicParser(file)
-# parser.process()
-
-import json
-with open(f"test.json") as f:
-    parser = common.music.Music().from_dict(json.load(f))
-
-music = Music(parser)
-
 manager = pygame_gui.UIManager((w, h))
-menu = NoteEditorMenu(manager, music)
-display = SheetDisplay(manager, img, music, menu.set_selected)
+menu = EditorMenu(manager, music)
+display = SheetDisplay(manager, img, music)
+menu.display = display
+display.menu = menu
 
 def save_and_update():
     with open(f"test.json", 'w') as f:
@@ -50,9 +53,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        display.process_event(event)
         manager.process_events(event)
-        menu.process_event(event)
 
     manager.update(time_delta)
     manager.draw_ui(screen)

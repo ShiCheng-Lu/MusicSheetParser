@@ -8,23 +8,6 @@ from common.label import Bbox
 width = 180
 menu = None
 
-class BarEditorMenu():
-    def __init__(self, manager) -> None:
-        global menu
-        menu = self
-
-        self.panel = pygame_gui.elements.UIPanel(relative_rect=pygame.Rect(900, 0, 180, 860))
-
-        self.duration_selector = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(0, 0, width, 50),
-            container=self.panel,
-            manager=manager,)
-        self.add_note_button = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect(0, 0, width, 50),
-            container=self.panel,
-            manager=manager,
-            text="Add Note")
-
 
 class Bar(common.music.Bar):
     def __init__(self, bar: common.music.Bar, parent_staff):
@@ -54,25 +37,67 @@ class Bar(common.music.Bar):
 
         self.valid = duration % target_duration == 0
 
-    def render(self, screen):
+    def render(self, screen, selected):
         for note in self.notes:
-            note.render(screen)
+            note.render(screen, selected)
         
         # don't outline if its valid
-        if self.valid:
+        if self.valid and selected != self:
             return
 
         thickness = 3
-
+        if selected == self:
+            color = (100, 100, 100)
+        else:
+            color = (200, 25, 25)
         rect = editor.pygame_utils.to_pygame_rect(self)
-        pygame.draw.rect(screen, (200, 25, 25), rect, thickness)
+        pygame.draw.rect(screen, color, rect, thickness)
     
     def delete_note(self, note):
-        self.notes.remove(note)
+        if note in self.notes:
+            self.notes.remove(note)
     
-    def select(self, pos: Bbox):
+    def select(self, x, y):
         for note in self.notes:
-            if result := note.select(pos):
+            if result := note.select(x, y):
                 return result
-        if self.intersects(pos):
+        if self.contains(x, y):
             return self
+
+class BarEditorMenu(pygame_gui.elements.UIPanel):
+    def __init__(self, manager, parent) -> None:
+        super().__init__(relative_rect=pygame.Rect(900, 0, 180, 860))
+        self.parent = parent
+        self.add_note_pos = (0, 0)
+
+        self.duration_selector = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(0, 0, width, 50),
+            container=self,
+            manager=manager,
+            text="Bar Duration")
+        self.add_note_button = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect(0, 0, width, 50),
+            container=self,
+            manager=manager,
+            anchors={"top_target": self.duration_selector},
+            text="Add Note")
+
+    def set_selected(self, bar: Bar):
+        self.selected = bar
+
+    def process_event(self, event: pygame.event.Event):
+        if event.type == pygame_gui.UI_BUTTON_PRESSED:
+            if event.ui_element == self.add_note_button:
+                size = self.selected.parent_staff.height / 8
+                new_note = common.music.Note([
+                    self.add_note_pos[0] - size,
+                    self.add_note_pos[1] - size,
+                    self.add_note_pos[0] + size,
+                    self.add_note_pos[1] + size,
+                    ], 'customNote')
+                self.selected.notes.append(Note(new_note, self.selected))
+
+                self.parent()
+
+
+

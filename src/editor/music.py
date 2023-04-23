@@ -21,18 +21,25 @@ class Staff(common.music.Staff):
         self.parent_music = parent_music
         self.bars: list[Bar] = [Bar(bar, self) for bar in self.bars]
 
-    def render(self, screen):
+    def render(self, screen, selected):
         for bar in self.bars:
-            bar.render(screen)
+            bar.render(screen, selected)
+    
+    def select(self, x, y):
+        for bar in self.bars:
+            if result := bar.select(x, y):
+                return result
+        if self.contains(x, y):
+            return self
 
 class Music(common.music.Music):
     def __init__(self, music: common.music.Music):
         music.copy(self)
         self.staffs: list[Staff] = [Staff(staff, self) for staff in self.staffs]
 
-    def render(self, screen):
+    def render(self, screen, selected):
         for staff in self.staffs:
-            staff.render(screen)
+            staff.render(screen, selected)
     
     @property
     def notes(self):
@@ -41,3 +48,8 @@ class Music(common.music.Music):
             for bar in staff.bars:
                 notes.extend(bar.notes)
         return notes
+    
+    def select(self, x, y):
+        for staff in self.staffs:
+            if result := staff.select(x, y):
+                return result

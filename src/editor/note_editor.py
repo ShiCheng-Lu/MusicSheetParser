@@ -31,10 +31,8 @@ class Note(common.music.Note):
         note.copy(self)
         self.parent_bar = parent_bar
 
-        self.render_color = (25, 200, 25)
-
-    def render(self, screen):
-        thickness = 3
+    def render(self, screen, selected):
+        thickness = 5
 
         text = font.render(self.pitch_str, True, (25, 25, 255))
 
@@ -46,7 +44,9 @@ class Note(common.music.Note):
         rect.width += thickness
         rect.height += thickness
 
-        pygame.draw.rect(screen, self.render_color, rect, thickness)
+        color = (25, 150, 150) if selected == self else (25, 200, 25)
+
+        pygame.draw.rect(screen, color, rect, thickness)
         screen.blit(text, textRect)
 
     def update(self, duration, pitch, modifier):
@@ -57,23 +57,23 @@ class Note(common.music.Note):
         self.parent_bar.validate()
         pass
     
-    def select(self, pos: Bbox):
-        if self.intersects(pos):
+    def select(self, x, y):
+        if self.contains(x, y):
             return self
 
-
-class NoteEditorMenu():
-    def __init__(self, manager):
-        self.panel = pygame_gui.elements.UIPanel(relative_rect=pygame.Rect(900, 0, 180, 860))
+class NoteEditorMenu(pygame_gui.elements.UIPanel):
+    def __init__(self, manager, parent):
+        super().__init__(relative_rect=pygame.Rect(900, 0, 180, 860))
+        self.parent = parent
 
         self.pitch_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(0, 0, width, 50),
-            container=self.panel,
+            container=self,
             manager=manager,
             text="Note Pitch:",)
         self.pitch_selector = pygame_gui.elements.UIDropDownMenu(
             relative_rect=pygame.Rect(0, 0, width, 50),
-            container=self.panel,
+            container=self,
             manager=manager,
             anchors={"top_target": self.pitch_label},
             options_list=common.music.SEMITONE_MAP,
@@ -81,13 +81,13 @@ class NoteEditorMenu():
         
         self.modifier_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(0, 0, width, 50),
-            container=self.panel,
+            container=self,
             manager=manager,
             anchors={"top_target": self.pitch_selector},
             text="Note Modifier:",)
         self.modifier_selector = pygame_gui.elements.UIDropDownMenu(
             relative_rect=pygame.Rect(0, 0, width, 50),
-            container=self.panel,
+            container=self,
             manager=manager,
             anchors={"top_target": self.modifier_label},
             options_list=MOD_MAP,
@@ -95,13 +95,13 @@ class NoteEditorMenu():
 
         self.duration_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(0, 0, width, 50),
-            container=self.panel,
+            container=self,
             manager=manager,
             anchors={"top_target": self.modifier_selector},
             text="Note Duration:",)
         self.duration_selector = pygame_gui.elements.UIHorizontalSlider(
             relative_rect=pygame.Rect(0, 0, width, 50),
-            container=self.panel,
+            container=self,
             manager=manager,
             start_value=0,
             anchors={"top_target": self.duration_label},
@@ -109,14 +109,14 @@ class NoteEditorMenu():
         
         self.delete_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(0, 0, width, 50),
-            container=self.panel,
+            container=self,
             manager=manager,
             anchors={'top_target': self.duration_selector},
             text="Delete Note")
         
         self.save_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(0, -50, width, 50),
-            container=self.panel,
+            container=self,
             manager=manager,
             anchors={'bottom': 'bottom'},
             text="Save")
@@ -132,31 +132,28 @@ class NoteEditorMenu():
 
             # set duration selector
             self.duration_selector.set_current_value(note.duration * 32)
-            self.update()
+            self.update_text()
     
-    def update(self):
+    def update_text(self):
         duration_text = common.music.display_duration(self.duration_selector.current_value / 32)
         self.duration_label.set_text(f"Note Duration: {duration_text}")
 
-    def process_event(self, event):
+    def process_event(self, event: pygame.event.Event):
         if event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
             if event.ui_element == self.duration_selector:
-                self.update()
+                self.update_text()
         
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
-            if event.ui_element == self.delete_button and self.selected:
+            if event.ui_element == self.delete_button:
                 bar = self.selected.parent_bar
                 bar.delete_note(self.selected)
                 bar.validate()
             
-            if event.ui_element == self.save_button and self.selected:
+            if event.ui_element == self.save_button:
                 self.selected.update( 
                     self.duration_selector.current_value / 32,
                     TONE_MAP.index(self.pitch_selector.selected_option) - A4_POS,
                     MOD_MAP[self.modifier_selector.selected_option])
 
-            if self.on_update != None:
-                self.on_update()
-
-
-
+            # print(self.parent)
+            self.parent()
