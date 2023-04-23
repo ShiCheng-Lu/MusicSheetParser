@@ -6,50 +6,44 @@ from editor.music import Note, Music
 w, h = 1080, 860
 # menu_rect = Bbox([900, 0, 1080, 860])
 
-class SheetDisplay:
-    def __init__(self, manager, image, music: Music, on_select_note):
+class SheetDisplay(pygame_gui.elements.UIImage):
+    def __init__(self, manager, image, music: Music):
+        super().__init__(relative_rect=pygame.Rect(0, 0, 900, h),
+            manager=manager,
+            image_surface=image)
+
         self.scale = 1
-        self.image = image
+        self.music_image = image
         self.image_rect = image.get_rect()
         self.surface = pygame.Surface((self.image_rect.width, self.image_rect.height))
+        self.display_surface = pygame.Surface((900, h))
         self.offset = Bbox((0, 0, 0, 0))
 
         self.music = music
-        self.on_selected_note = on_select_note
 
-        self.display_image = pygame_gui.elements.UIImage(
-            relative_rect=pygame.Rect(0, 0, 900, h),
-            manager=manager,
-            image_surface=self.surface)
-        
         self.moved = False
         self.moving = False
         self.selected = None
+        self.menu = None
         
-        self.update()
+        self.update_render(None)
         self.render()
     
-    def update(self):
+    def update_render(self, selected):
         self.surface.fill((0, 0, 0))
-        self.surface.blit(self.image, (0, 0))
-        self.music.render(self.surface)
+        self.surface.blit(self.music_image, (0, 0))
+        self.music.render(self.surface, selected)
     
     def render(self):
-        surface = pygame.Surface((900, h))
+        self.display_surface.fill((0, 0, 0))
+
         result = pygame.transform.scale(self.surface, 
             (self.image_rect.width * self.scale, self.image_rect.height * self.scale))
-        surface.blit(result, (self.offset.x_min, self.offset.y_min))
+        self.display_surface.blit(result, (self.offset.x_min, self.offset.y_min))
 
-        self.display_image.set_image(surface)
+        self.set_image(self.display_surface)
 
     def process_event(self, event):
-        # all events require event.pos, ignore events that doesn have it
-        try:
-            if not self.surface.get_rect().collidepoint(event.pos):
-                return
-        except AttributeError:
-            return
-
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == pygame.BUTTON_WHEELUP:
                 # zoom in
@@ -78,19 +72,13 @@ class SheetDisplay:
             self.render()
         
         if event.type == pygame.MOUSEBUTTONUP and event.button == pygame.BUTTON_LEFT and not self.moved:
-            mouse_pos = Bbox(event.pos * 2)
             selected = None
             
-            # selected = self.music.select()
-            for staff in self.music.staffs:
-                for bar in staff.bars:
-                    for note in bar.notes:
-                        if mouse_pos.intersects(note):
-                            selected = note
-                        note.render_color = (25, 200, 25)
-            
-            if selected != None:
-                selected.render_color = (200, 150, 25)
-            if self.on_selected_note:
-                self.on_selected_note(selected)
+            x = (event.pos[0] - self.offset.x_min) / self.scale
+            y = (event.pos[1] - self.offset.y_min) / self.scale
+
+            selected = self.music.select(x, y)
+            self.update_render(selected)
             self.render()
+
+            self.menu.set_selected(selected, x, y)

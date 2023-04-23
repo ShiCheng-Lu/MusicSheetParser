@@ -83,7 +83,7 @@ class Note(Label):
             return 'rest'
         string = chr(ord('A') + self.pitch % 7)
         string += str(self.pitch // 7 + 4)
-        match self.modifier:
+        match (self.modifier or self.parent_bar.parent_staff.keys[self.pitch % 7]):
             case -2: string += 'bb'
             case -1: string += 'b'
             case  1: string += '#'
