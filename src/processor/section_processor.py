@@ -1,5 +1,5 @@
 from common.label import Bbox, Label
-from common.music import Staff
+from common.music import Staff, Music
 from processor.bar_processor import BarProcessor
 
 from model.model import MusicSymbolDetector
@@ -41,6 +41,8 @@ class SectionProcessor:
         section = self.parent.image[self.section.y_min:self.section.y_max, self.section.x_min:self.section.x_max]
         # object detect
         labels = detector(section)
+
+        time_sig = []
         for label in labels:
             label.name = categories[str(label.name)]["name"]
 
@@ -56,12 +58,19 @@ class SectionProcessor:
             # weird beams
             if label.name == "beam" and label.height >= self.staff_height:
                 continue
+            if 'timeSig' in label.name:
+                # TODO: setup time sig
+                time_sig.append(label)
+                continue
 
             label.move(self.section.x_min, self.section.y_min)
 
             for bar in self.bars:
                 if bar.intersects(label):
                     bar.labels.append(label)
+
+        if len(time_sig) != 0:
+            self.parent.set_time_sig(time_sig)
 
         for bar in self.bars:
             bar.process()

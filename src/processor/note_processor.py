@@ -70,12 +70,12 @@ class NoteProcessor(Note):
         self._get_semitone(self)
 
     def _get_duration(self):
-        whole_note_len = 0.75 # because tempo was 3/4
-
-        if 'DoubleWhole' in self.name:
-            self.duration = 2 * whole_note_len
+        if self.name == 'restWhole':
+            self.duration = self.parent_bar.parent_staff.parent_music.time_sig_duration
+        elif 'DoubleWhole' in self.name:
+            self.duration = 2
         elif 'Whole' in self.name:
-            self.duration = 1 * whole_note_len
+            self.duration = 1
         elif 'Half' in self.name:
             self.duration = 0.5
         elif 'Quarter' in self.name:

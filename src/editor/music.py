@@ -53,8 +53,9 @@ class Note(common.music.Note):
         pass
 
 class Bar(common.music.Bar):
-    def __init__(self, bar: common.music.Bar):
+    def __init__(self, bar: common.music.Bar, parent_staff):
         bar.copy(self)
+        self.parent_staff = parent_staff
         self.notes: list[Note] = [Note(note, self) for note in self.notes]
 
         self.valid = False
@@ -62,6 +63,7 @@ class Bar(common.music.Bar):
 
     def validate(self):
         duration = 0
+        target_duration = self.parent_staff.parent_music.time_sig_duration
 
         group_duration = 0
         group_x_end = 0
@@ -76,8 +78,7 @@ class Bar(common.music.Bar):
                 group_x_end = max(group_x_end, note.x_max)
         duration += group_duration
 
-        self.valid = (duration == 1) or (duration == 2) # TODO: use music time sig
-
+        self.valid = duration % target_duration == 0
 
     def render(self, screen, x, y, scale):
         for note in self.notes:
@@ -104,9 +105,10 @@ class Bar(common.music.Bar):
         
 
 class Staff(common.music.Staff):
-    def __init__(self, staff: common.music.Staff):
+    def __init__(self, staff: common.music.Staff, parent_music):
         staff.copy(self)
-        self.bars: list[Bar] = [Bar(bar) for bar in self.bars]
+        self.parent_music = parent_music
+        self.bars: list[Bar] = [Bar(bar, self) for bar in self.bars]
 
     def render(self, screen, x, y, scale):
         for bar in self.bars:
@@ -115,7 +117,7 @@ class Staff(common.music.Staff):
 class Music(common.music.Music):
     def __init__(self, music: common.music.Music):
         music.copy(self)
-        self.staffs: list[Staff] = [Staff(staff) for staff in self.staffs]
+        self.staffs: list[Staff] = [Staff(staff, self) for staff in self.staffs]
 
     def render(self, screen, x, y, scale):
         for staff in self.staffs:

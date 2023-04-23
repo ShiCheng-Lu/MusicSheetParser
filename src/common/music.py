@@ -139,6 +139,7 @@ class Staff(Label):
         self.keys: list[int] = [0 for _ in range(7)]
         self.clef: Label = None
         self.bars: list[Bar] = []
+        self.parent_music: Music = None
     
     def copy(self, other=None):
         if other == None:
@@ -156,11 +157,12 @@ class Staff(Label):
             "bars": [bar.to_dict() for bar in self.bars],
         }
     
-    def from_dict(self, data):
+    def from_dict(self, data, parent_music):
         super().from_dict(data)
         self.keys = data["keys"]
         self.clef = Label().from_dict(data["clef"])
         self.bars = [Bar().from_dict(bar, self) for bar in data["bars"]]
+        self.parent_music = parent_music
         return self
 
 class Music:
@@ -169,6 +171,10 @@ class Music:
         self.group: int = None
         self.bpm: int = 80
         self.time_sig: list[int] = [4, 4]
+    
+    @property
+    def time_sig_duration(self):
+        return self.time_sig[0] / self.time_sig[1]
     
     def copy(self, other=None):
         if other == None:
@@ -186,7 +192,7 @@ class Music:
         }
     
     def from_dict(self, data):
-        self.staffs = [Staff().from_dict(data) for data in data["staffs"]]
+        self.staffs = [Staff().from_dict(data, self) for data in data["staffs"]]
         self.group = data["group"]
         self.bpm = data["bpm"]
         return self
