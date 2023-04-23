@@ -53,3 +53,4 @@ class Music(common.music.Music):
         for staff in self.staffs:
             if result := staff.select(x, y):
                 return result
+        return self

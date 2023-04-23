@@ -6,6 +6,7 @@ import common.music
 import editor.pygame_utils as pygame_utils
 from editor.note_editor import Note, NoteEditorMenu
 from editor.bar_editor import Bar, BarEditorMenu
+from editor.music_editor import MusicEditorMenu
 import json
 
 TONE_MAP = [
@@ -25,13 +26,6 @@ MOD_MAP = {"None": None, "Natural": 0, "Sharp": 1, "Flat": -1, "DoubleSharp": 2,
 w, h = 1080, 860
 menu_rect = Bbox([900, 0, 1080, 860])
 
-class MusicEditorMenu(pygame_gui.elements.UIPanel):
-    def __init__(self):
-        super().__init__(relative_rect=pygame.Rect(900, 0, 180, 860))
-
-    def set_selected(self, selected):
-        pass
-
 class EditorMenu:
     def __init__(self, manager, music, on_update=None):
         self.music = music
@@ -41,7 +35,7 @@ class EditorMenu:
 
         self.note_editor_menu = NoteEditorMenu(manager, self.on_update)
         self.bar_editor_menu = BarEditorMenu(manager, self.on_update)
-        self.music_editor_menu = MusicEditorMenu()
+        self.music_editor_menu = MusicEditorMenu(manager, self.on_update)
 
         self.display = None
         
@@ -58,6 +52,7 @@ class EditorMenu:
         
         self.note_editor_menu.hide()
         self.bar_editor_menu.hide()
+        self.music_editor_menu.hide()
 
         self.active_menu.set_selected(selected)
         self.active_menu.show()
