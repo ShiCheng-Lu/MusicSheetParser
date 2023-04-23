@@ -7,7 +7,7 @@ import pygame_gui
 from editor.music import Music
 from editor.selction_gui import NoteEditorMenu
 from editor.sheet_display import SheetDisplay
-from processor.processor import MusicParser2
+from processor.processor import MusicParser
 import common.music
 import json
 
@@ -17,14 +17,14 @@ screen = pygame.display.set_mode((w, h))
 running = True
 
 # file = "sheets/bohemia rhapsody.png"
-# file = "sheets/genshin main theme.png"
+file = "sheets/genshin main theme.png"
 # file = "sheets/imagine john lennon.png"
-file = "sheets/never gonna give you up.png"
+# file = "sheets/never gonna give you up.png"
 
 img = pygame.image.load(file)
 img.convert()
 
-parser = MusicParser2(file)
+parser = MusicParser(file)
 parser.process()
 
 # import json

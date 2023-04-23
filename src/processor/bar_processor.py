@@ -25,9 +25,9 @@ class BarProcessor(Bar):
                 size_offset = (label.x_max - label.x_min) * 0.1 # extend by 5%
                 label.x_min -= size_offset
                 label.x_max += size_offset
-                self.notes.append(NoteProcessor(label, self.parent_staff.clef, self.parent_staff))
+                self.notes.append(NoteProcessor(label, self, self.parent_staff))
             elif 'rest' in label.name:
-                self.notes.append(NoteProcessor(label, self.parent_staff.clef, self.parent_staff))
+                self.notes.append(NoteProcessor(label, self, self.parent_staff))
             elif 'clef' in label.name:
                 self.parent_staff.clef = label
             elif 'accidental' in label.name:

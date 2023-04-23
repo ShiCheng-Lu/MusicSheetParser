@@ -11,6 +11,9 @@ class MusicPlayer:
     
     def wait(self, duration):
         time.sleep(duration * 240 / self.bpm)
+    
+    def start(self, music):
+        pass
 
 class Note(common.music.Note):
     def __init__(self, note: common.music.Note):
@@ -88,7 +91,8 @@ class Music(common.music.Music):
             self.staff_sem.wait()
             staff.play(player)
 
-    def play(self, player):
+    def play(self, player: MusicPlayer):
+        player.start(self)
         staff_groups = [[] for _ in range(self.group)]
         for index, staff in enumerate(self.staffs):
             staff_groups[index % self.group].append(staff)
