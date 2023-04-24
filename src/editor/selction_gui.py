@@ -58,6 +58,9 @@ class EditorMenu:
         self.active_menu.show()
 
     def on_update(self):
-        print("update")
         self.display.update_render(self.active_menu.selected)
         self.display.render()
+
+        with open(f"test.json", 'w') as f:
+            f.write(json.dumps(self.music.to_dict()))
+

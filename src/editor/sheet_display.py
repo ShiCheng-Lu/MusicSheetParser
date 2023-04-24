@@ -72,13 +72,14 @@ class SheetDisplay(pygame_gui.elements.UIImage):
             self.render()
         
         if event.type == pygame.MOUSEBUTTONUP and event.button == pygame.BUTTON_LEFT and not self.moved:
-            selected = None
-            
-            x = (event.pos[0] - self.offset.x_min) / self.scale
-            y = (event.pos[1] - self.offset.y_min) / self.scale
+            if self.display_surface.get_rect().collidepoint(event.pos):
+                selected = None
+                
+                x = (event.pos[0] - self.offset.x_min) / self.scale
+                y = (event.pos[1] - self.offset.y_min) / self.scale
 
-            selected = self.music.select(x, y)
-            self.update_render(selected)
-            self.render()
+                selected = self.music.select(x, y)
+                self.update_render(selected)
+                self.render()
 
-            self.menu.set_selected(selected, x, y)
+                self.menu.set_selected(selected, x, y)

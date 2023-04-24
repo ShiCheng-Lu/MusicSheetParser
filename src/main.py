@@ -10,6 +10,10 @@ from editor.sheet_display import SheetDisplay
 import common.music
 import json
 
+# file = "sheets/bohemia rhapsody.png"
+file = "sheets/genshin main theme.png"
+# file = "sheets/imagine john lennon.png"
+# file = "sheets/never gonna give you up.png"
 
 # from processor.music_processor import MusicParser
 # parser = MusicParser(file)
@@ -26,11 +30,6 @@ w, h = 1080, 860
 screen = pygame.display.set_mode((w, h))
 running = True
 
-# file = "sheets/bohemia rhapsody.png"
-file = "sheets/genshin main theme.png"
-# file = "sheets/imagine john lennon.png"
-# file = "sheets/never gonna give you up.png"
-
 img = pygame.image.load(file)
 img.convert()
 
@@ -39,12 +38,6 @@ menu = EditorMenu(manager, music)
 display = SheetDisplay(manager, img, music)
 menu.display = display
 display.menu = menu
-
-def save_and_update():
-    with open(f"test.json", 'w') as f:
-        f.write(json.dumps(music.to_dict()))
-    display.render()
-menu.on_update = save_and_update
 
 clock = pygame.time.Clock()
 while running:
