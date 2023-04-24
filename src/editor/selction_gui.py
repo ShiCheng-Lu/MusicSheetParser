@@ -39,7 +39,7 @@ class EditorMenu:
 
         self.display = None
         
-        self.set_selected(None, 0, 0)
+        self.set_selected(music, 0, 0)
     
     def set_selected(self, selected, x, y):
         if isinstance(selected, Note):

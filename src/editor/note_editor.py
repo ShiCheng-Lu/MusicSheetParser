@@ -124,11 +124,18 @@ class NoteEditorMenu(pygame_gui.elements.UIPanel):
     def set_selected(self, note: Note):
         self.selected = note
         if note:
-            tone = TONE_MAP[note.pitch + A4_POS]
             # set pitch selector
+            tone = TONE_MAP[note.pitch + A4_POS]
             self.pitch_selector.selected_option = tone
             self.pitch_selector.current_state.selected_option = tone
             self.pitch_selector.current_state.start()
+
+            #set modifier selector
+            MOD_MAP
+            self.modifier_selector.selected_option = tone
+            self.modifier_selector.current_state.selected_option = tone
+            self.modifier_selector.current_state.start()
+
 
             # set duration selector
             self.duration_selector.set_current_value(note.duration * 32)
@@ -155,5 +162,4 @@ class NoteEditorMenu(pygame_gui.elements.UIPanel):
                     TONE_MAP.index(self.pitch_selector.selected_option) - A4_POS,
                     MOD_MAP[self.modifier_selector.selected_option])
 
-            # print(self.parent)
             self.parent()
