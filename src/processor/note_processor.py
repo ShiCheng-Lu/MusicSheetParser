@@ -38,7 +38,7 @@ class NoteProcessor(Note):
                 self.pitch -= 11
 
         # offset = self.staff_offsets[rel_position % 7]
-        self.modifier = 0
+        self.modifier = None
         # apply any flat/sharp modifiers
         notehead_size = notehead.y_max - notehead.y_min
         for modifier in self.modifiers:

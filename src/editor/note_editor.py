@@ -20,6 +20,7 @@ TONE_MAP = [
 A4_POS = TONE_MAP.index("A4")
 
 MOD_MAP = {"None": None, "Natural": 0, "Sharp": 1, "Flat": -1, "DoubleSharp": 2, "DoubleFlat": -2}
+MOD_MAP.update({v: k for k, v in MOD_MAP.items()})
 
 w, h = 1080, 860
 menu_rect = Bbox([900, 0, 1080, 860])
@@ -131,11 +132,10 @@ class NoteEditorMenu(pygame_gui.elements.UIPanel):
             self.pitch_selector.current_state.start()
 
             #set modifier selector
-            MOD_MAP
-            self.modifier_selector.selected_option = tone
-            self.modifier_selector.current_state.selected_option = tone
+            mod = MOD_MAP[note.modifier]
+            self.modifier_selector.selected_option = mod
+            self.modifier_selector.current_state.selected_option = mod
             self.modifier_selector.current_state.start()
-
 
             # set duration selector
             self.duration_selector.set_current_value(note.duration * 32)
@@ -149,15 +149,20 @@ class NoteEditorMenu(pygame_gui.elements.UIPanel):
         if event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
             if event.ui_element == self.duration_selector:
                 self.update_text()
+                bar = self.selected.parent_bar
+                bar.update_duration(self.selected, event.value / 32)
+                bar.validate()
+            
+            self.parent()
         
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
             if event.ui_element == self.delete_button:
                 bar = self.selected.parent_bar
-                bar.delete_note(self.selected)
+                bar.notes.remove(self.selected)
                 bar.validate()
             
             if event.ui_element == self.save_button:
-                self.selected.update( 
+                self.selected.update(
                     self.duration_selector.current_value / 32,
                     TONE_MAP.index(self.pitch_selector.selected_option) - A4_POS,
                     MOD_MAP[self.modifier_selector.selected_option])

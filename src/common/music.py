@@ -58,7 +58,7 @@ class Note(Label):
         self.duration: float = 0
         self.pitch: int = 0
         self.start: float = 0
-        self.modifier: int = 0 # +1/-1 for sharp or flat
+        self.modifier: int = None # +1/-1 for sharp or flat
         self.parent_bar: Bar = None # Bar
     
     @property

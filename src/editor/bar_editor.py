@@ -53,9 +53,10 @@ class Bar(common.music.Bar):
         rect = editor.pygame_utils.to_pygame_rect(self)
         pygame.draw.rect(screen, color, rect, thickness)
     
-    def delete_note(self, note):
-        if note in self.notes:
-            self.notes.remove(note)
+    def update_duration(self, updating_note: Note, duration):
+        for note in self.notes:
+            if note.x_min <= updating_note.x_max and note.x_max >= updating_note.x_min:
+                note.duration = duration
     
     def select(self, x, y):
         for note in self.notes:
