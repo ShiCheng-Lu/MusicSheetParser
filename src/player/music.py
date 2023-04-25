@@ -65,6 +65,8 @@ class Staff(common.music.Staff):
     def play(self, player: MusicPlayer):
         for bar in self.bars:
             self.parent.bar_sem.wait()
+            if self.parent.stop_event.is_set():
+                return
 
             duration = bar.play(0, player)
             player.wait(duration)
@@ -84,7 +86,13 @@ class Music(common.music.Music):
         self.bar_sem = threading.Barrier(self.group)
         self.staff_sem = threading.Barrier(self.group)
 
+        self.stop_event = threading.Event()
+
         self.playing_threads: list[threading.Thread] = []
+    
+    @property
+    def playing(self):
+        return not self.stop_event.is_set()
     
     def play_staffs(self, staffs, player):
         for staff in staffs:
@@ -92,6 +100,7 @@ class Music(common.music.Music):
             staff.play(player)
 
     def play(self, player: MusicPlayer):
+        self.stop_event.clear()
         player.start(self)
         staff_groups = [[] for _ in range(self.group)]
         for index, staff in enumerate(self.staffs):
@@ -102,6 +111,7 @@ class Music(common.music.Music):
         for thread in self.playing_threads:
             thread.start()
 
-        # for start in range(0, len(self.staffs), self.group):
-        #     end = start + self.group
-        #     print(self.staffs[start:end])
+    def stop(self):
+        self.stop_event.set()
+        for thread in self.playing_threads:
+            thread.join()
