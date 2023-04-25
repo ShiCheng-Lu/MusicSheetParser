@@ -1,9 +1,6 @@
-from processor.note_processor import Note
-import math
 from common.label import Label
 from common.music import Music
 import processor.staff_utils as staff_utils
-import operator
 import cv2
 from processor.section_processor import SectionProcessor
 

@@ -1,8 +1,6 @@
 
-import pygame
 import pygame_gui
 from common.label import Bbox
-import common.music
 import editor.pygame_utils as pygame_utils
 from editor.note_editor import Note, NoteEditorMenu
 from editor.bar_editor import Bar, BarEditorMenu

@@ -1,7 +1,7 @@
 import pygame
 import pygame_gui
 from common.label import Bbox
-from editor.music import Note, Music
+from editor.music import Music
 
 w, h = 1080, 860
 # menu_rect = Bbox([900, 0, 1080, 860])

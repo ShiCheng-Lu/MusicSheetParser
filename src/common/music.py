@@ -3,6 +3,8 @@ Music data structure
 
 {
     "name": <string>
+    "group": <int>
+    "bpm": <int>
     "staffs": [
         {
             "bbox": <int[4]>,
@@ -32,7 +34,6 @@ Music data structure
         },
         ...
     ]
-    "group": <int>
 }
 
 '''
