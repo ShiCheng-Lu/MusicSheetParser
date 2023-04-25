@@ -1,8 +1,5 @@
 import pygame
-import common.music
 import pygame_gui
-from common.label import Bbox
-import editor.pygame_utils
 import player.music
 from player.piano_player import PianoPlayer
 

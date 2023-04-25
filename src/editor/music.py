@@ -1,7 +1,5 @@
 import common.music
-from common.label import Bbox
 from editor.bar_editor import Bar
-from editor.note_editor import Note
 
 import pygame
 

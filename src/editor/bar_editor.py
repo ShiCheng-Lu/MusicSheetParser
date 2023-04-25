@@ -3,7 +3,6 @@ import pygame_gui
 import pygame
 import editor.pygame_utils
 from editor.note_editor import Note
-from common.label import Bbox
 
 width = 180
 menu = None

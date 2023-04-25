@@ -1,4 +1,4 @@
-from common.label import Bbox, Label
+from common.label import Label
 from common.music import Bar, Staff
 from processor.note_processor import NoteProcessor
 import math

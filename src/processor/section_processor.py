@@ -1,17 +1,16 @@
 from common.label import Bbox, Label
-from common.music import Staff, Music
+from common.music import Staff
 from processor.bar_processor import BarProcessor
 
 from model.model import MusicSymbolDetector
 import json
-import matplotlib.pyplot as plt
-import torch
-from torchvision.utils import draw_bounding_boxes
+
 
 with open(f"category.json") as f:
     categories = json.load(f)
 detector = MusicSymbolDetector()
 detector.load("best_model.pt")
+
 
 class SectionProcessor:
     def __init__(self, section: Bbox, staffs: list[Staff], parent):
@@ -24,21 +23,24 @@ class SectionProcessor:
         cutoff = self.section.y_min
         for a, b in zip(staffs[:-1], staffs[1:]):
             mid = (a.y_max + b.y_min) / 2
-            bar = Label([self.section.x_min, cutoff, self.section.x_max, mid], "bar")
+            bar = Label([self.section.x_min, cutoff,
+                        self.section.x_max, mid], "bar")
 
             bar_processor = BarProcessor(bar, a)
             self.bars.append(bar_processor)
             a.bars.append(bar_processor)
             cutoff = mid
-        
-        bar = Label([self.section.x_min, cutoff, self.section.x_max, self.section.y_max], "bar")
+
+        bar = Label([self.section.x_min, cutoff,
+                    self.section.x_max, self.section.y_max], "bar")
 
         bar_processor = BarProcessor(bar, staffs[-1])
         self.bars.append(bar_processor)
         staffs[-1].bars.append(bar_processor)
 
     def process(self):
-        section = self.parent.image[self.section.y_min:self.section.y_max, self.section.x_min:self.section.x_max]
+        section = self.parent.image[self.section.y_min:self.section.y_max,
+                                    self.section.x_min:self.section.x_max]
         # object detect
         labels = detector(section)
 
