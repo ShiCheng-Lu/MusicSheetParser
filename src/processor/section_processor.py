@@ -11,7 +11,7 @@ from torchvision.utils import draw_bounding_boxes
 with open(f"category.json") as f:
     categories = json.load(f)
 detector = MusicSymbolDetector()
-detector.load("saved_models_bars/10")
+detector.load("best_model.pt")
 
 class SectionProcessor:
     def __init__(self, section: Bbox, staffs: list[Staff], parent):
@@ -45,15 +45,6 @@ class SectionProcessor:
         time_sig = []
         for label in labels:
             label.name = categories[str(label.name)]["name"]
-
-        # boxes = [label.bbox for label in labels]
-        # plt.imshow(draw_bounding_boxes(
-        #     torch.tensor(section).unsqueeze(0), 
-        #     torch.tensor(boxes), 
-        #     [label.name for label in labels]).moveaxis(0, 2))
-        # plt.show()
-    
-        # for label in labels:
 
             # weird beams
             if label.name == "beam" and label.height >= self.staff_height:
