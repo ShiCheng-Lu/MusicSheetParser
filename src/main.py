@@ -1,7 +1,3 @@
-'''
-Editor bounding boxes
-'''
-
 import pygame
 import pygame_gui
 from editor.music import Music
