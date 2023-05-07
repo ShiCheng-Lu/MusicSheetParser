@@ -6,6 +6,7 @@ import sys
 from tqdm import tqdm
 from common.label import Label
 from model.dataset import MusicSheetDataSet
+from torchmetrics.detection.mean_ap import MeanAveragePrecision
 
 if (torch.cuda.is_available()):
     device = torch.device("cuda")
@@ -139,3 +140,34 @@ class MusicSymbolDetector:
             ))
 
             self.save(f"../saved_models_bars/{self.epoch}")
+
+    def test(self, dataset: MusicSheetDataSet):
+        dataloader = DataLoader(
+            dataset,
+            collate_fn=lambda x : zip(*x),
+            batch_size=3,
+        )
+
+        self.model.to(device)
+        self.model.eval()
+        
+        metric = MeanAveragePrecision()
+        preds = []
+        targs = []
+
+        for images, targets in tqdm(dataloader):
+            images = [image.to(device) for image in images]
+            targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
+
+            if any(len(target['boxes']) == 0 for target in targets):
+                continue
+
+            results = self.model(images)
+            
+            results = map(lambda r: {k: v.detach() for k, v in r.items()}, results)
+
+            preds.extend(results)
+            targs.extend(targets)
+
+        metric.update(preds, targs)
+        print(metric.compute())
