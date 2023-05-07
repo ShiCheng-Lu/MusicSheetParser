@@ -1,1 +1,16 @@
-{'map': tensor(0.5165), 'map_50': tensor(0.6711), 'map_75': tensor(0.6208), 'map_small': tensor(0.4795), 'map_medium': tensor(0.5796), 'map_large': tensor(0.1176), 'mar_1': tensor(0.4328), 'mar_10': tensor(0.6114), 'mar_100': tensor(0.6128), 'mar_small': tensor(0.5732), 'mar_medium': tensor(0.6580), 'mar_large': tensor(0.2050), 'map_per_class': tensor(-1.), 'mar_100_per_class': tensor(-1.)}
+{
+    "map": tensor(0.5165),
+    "map_50": tensor(0.6711),
+    "map_75": tensor(0.6208),
+    "map_small": tensor(0.4795),
+    "map_medium": tensor(0.5796),
+    "map_large": tensor(0.1176),
+    "mar_1": tensor(0.4328),
+    "mar_10": tensor(0.6114),
+    "mar_100": tensor(0.6128),
+    "mar_small": tensor(0.5732),
+    "mar_medium": tensor(0.6580),
+    "mar_large": tensor(0.2050),
+    "map_per_class": tensor(-1.),
+    "mar_100_per_class": tensor(-1.)
+}
