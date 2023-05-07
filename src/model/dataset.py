@@ -77,7 +77,7 @@ class MusicSheetDataSet(datasets.VisionDataset):
         for labels in result:
             self.sections.extend(labels)
 
-        self.random(1)
+        self.sampling_sections = self.sections
 
 
     def section(self, data):
@@ -115,7 +115,6 @@ class MusicSheetDataSet(datasets.VisionDataset):
         plt.imshow(utils.draw_bounding_boxes(
             image.mul(255).type(torch.uint8), targets['boxes'], width=4
         ).moveaxis(0, 2))
-        plt.savefig("img.png", dpi=2000)
 
     def __len__(self):
         return len(self.sampling_sections)
