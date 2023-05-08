@@ -53,6 +53,18 @@ SEMITONE_MAP = [ # range: -48 to +39 relative to A4
     "A3", "Bb3", "B3", "C4", "Db4", "D4", "Eb4", "E4", "F4", "Gb4", "G4", "Ab4",
 ]
 
+TONE_MAP = [
+    "A4", "B4", "C5", "D5", "E5", "F5", "G5",
+    "A5", "B5", "C6", "D6", "E6", "F6", "G6",
+    "A6", "B6", "C7", "D7", "E7", "F7", "G7",
+    "A7", "B7",
+    # indexed negatively, these are lower than A4
+    "A0", "B0", "C1", "D1", "E1", "F1", "G1",
+    "A1", "B1", "C2", "D2", "E2", "F2", "G2",
+    "A2", "B2", "C3", "D3", "E3", "F3", "G3",
+    "A3", "B3", "C4", "D4", "E4", "F4", "G4",
+]
+
 class Note(Label):
     def __init__(self, bbox=None, name=None):
         super().__init__(bbox, name)
@@ -82,8 +94,7 @@ class Note(Label):
     def pitch_str(self):
         if 'rest' in self.name:
             return 'rest'
-        string = chr(ord('A') + self.pitch % 7)
-        string += str(self.pitch // 7 + 4)
+        string = TONE_MAP[self.pitch]
         match (self.modifier or self.parent_bar.parent_staff.keys[self.pitch % 7]):
             case -2: string += 'bb'
             case -1: string += 'b'
