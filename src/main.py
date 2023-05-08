@@ -11,13 +11,13 @@ file = "sheets/genshin main theme.png"
 # file = "sheets/imagine john lennon.png"
 # file = "sheets/never gonna give you up.png"
 
-# from processor.music_processor import MusicParser
-# parser = MusicParser(file)
-# parser.process()
+from processor.music_processor import MusicParser
+parser = MusicParser(file)
+parser.process()
 
-import json
-with open(f"test.json") as f:
-    parser = common.music.Music().from_dict(json.load(f))
+# import json
+# with open(f"test.json") as f:
+#     parser = common.music.Music().from_dict(json.load(f))
 
 music = Music(parser)
 

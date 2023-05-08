@@ -77,8 +77,8 @@ class NoteEditorMenu(pygame_gui.elements.UIPanel):
             container=self,
             manager=manager,
             anchors={"top_target": self.pitch_label},
-            options_list=common.music.SEMITONE_MAP,
-            starting_option="A4",)
+            options_list=common.music.SEMITONE_MAP + ['Rest'],
+            starting_option="Rest",)
         
         self.modifier_label = pygame_gui.elements.UILabel(
             relative_rect=pygame.Rect(0, 0, width, 50),
@@ -127,6 +127,8 @@ class NoteEditorMenu(pygame_gui.elements.UIPanel):
         if note:
             # set pitch selector
             tone = TONE_MAP[note.pitch + A4_POS]
+            if "rest" in note.name:
+                tone = "Rest"
             self.pitch_selector.selected_option = tone
             self.pitch_selector.current_state.selected_option = tone
             self.pitch_selector.current_state.start()

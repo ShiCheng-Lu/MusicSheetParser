@@ -28,13 +28,18 @@ class MusicEditorMenu(pygame_gui.elements.UIPanel):
             container=self,
             manager=manager,
             anchors={'top_target': self.open_file_button},
-            text="Time Signature:",)
+            text=f"Time Signature:",)
+        self.time_sig = pygame_gui.elements.UITextEntryLine(
+            relative_rect=pygame.Rect(0, 0, width, 50),
+            container=self,
+            manager=manager,
+            anchors={'top_target': self.time_sig_label},)
 
         self.play_button = pygame_gui.elements.UIButton(
             relative_rect=pygame.Rect(0, 0, width, 50),
             container=self,
             manager=manager,
-            anchors={'top_target': self.time_sig_label},
+            anchors={'top_target': self.time_sig},
             text="Play")
 
         self.save_button = pygame_gui.elements.UIButton(
@@ -48,6 +53,7 @@ class MusicEditorMenu(pygame_gui.elements.UIPanel):
 
     def set_selected(self, music):
         self.selected = music
+        self.time_sig.set_text(f"{music.time_sig[0]}/{music.time_sig[1]}")
 
     def process_event(self, event: pygame.event.Event):
         if event.type == pygame_gui.UI_BUTTON_PRESSED:
@@ -75,4 +81,14 @@ class MusicEditorMenu(pygame_gui.elements.UIPanel):
                     pass
                 if path.endswith(['.png', '.jpeg', '.jpg']):
                     # detect image
+                    pass
+        
+        if event.type == pygame_gui.UI_TEXT_ENTRY_CHANGED:
+            if event.ui_element == self.time_sig:
+                try:
+                    num = int(event.text.split("/")[0])
+                    den = int(event.text.split("/")[1])
+
+                    self.selected.time_sig = [num, den]
+                except:
                     pass

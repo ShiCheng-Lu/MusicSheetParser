@@ -2,7 +2,7 @@ import cv2
 from common.label import Label, Bbox
 from common.music import Staff, Bar
 
-def get_staffs(img: cv2.Mat, label_name="staff"):
+def get_staffs(img: cv2.Mat, label_name="staff") -> list[Staff]:
     '''
     Get Labels of staffs sorted by y value, use longest black horizontal lines in the image
     - img: the image matrix
@@ -45,7 +45,8 @@ def get_bars(img: cv2.Mat, staff: Staff, avoid: list[Label]=[], label_name="bar"
     '''
     DENSITY_THRESHOLD = 5 # density cutoff for a vertical bar line relative to the staff height, 0 to 255
     # full line through the staff, exactly the same from left and right
-    width = img.shape[1]
+    height, width = img.shape
+
     dim = (width, 1) # keep original height
     resized = cv2.resize(img[staff.y_min:staff.y_max,:], dim, interpolation = cv2.INTER_AREA)[0]
 
@@ -68,34 +69,52 @@ def get_bars(img: cv2.Mat, staff: Staff, avoid: list[Label]=[], label_name="bar"
 
     '''
     a bar must:
-    1. have the same pixel arragement to the left/right of the bar
-    2. end above or below the staff, does not extend out both above and below
-    This is to ensure note stems are not detected as bars,
-    every notehead that has a stem going through the entire staff will
-    - have notehead/beam within the staff, fails condition 1
-    - have both notehead and beam outside the staff, fails condition 2
-    Sometimes bars will be missed due to symbols that go over bars, such as tie/slur
+    - end at top and bottom flat
+    - corners of bars are white
     '''
     bars: list[Label] = []
     for bar in bars_candidate:
-        x_min_sample = img[staff.y_min:staff.y_max, bar.x_min - (bar.width + 1)]
-        x_max_sample = img[staff.y_min:staff.y_max, bar.x_max + (bar.width + 1)]
+        lt = bar.y_min
+        rt = bar.y_min
+        lb = bar.y_max
+        rb = bar.y_max
 
-        if any(a != b for a, b in zip(x_min_sample, x_max_sample)):
+        while img[lt][bar.x_min] == 0 and lt > 0:
+            lt -= 1
+        while img[rt][bar.x_max] == 0 and rt > 0:
+            rt -= 1
+        while img[lb][bar.x_min] == 0 and lb < height:
+            lb += 1
+        while img[rb][bar.x_max] == 0 and rb < height:
+            rb += 1
+        
+        # ends flat
+        if lt != rt or lb != rb:
             continue
         
-        y_min_sample = img[staff.y_min - (bar.width + 1), bar.x_min:bar.x_max]
-        y_max_sample = img[staff.y_max + (bar.width + 1), bar.x_min:bar.x_max]
-
-        if (sum(y_min_sample) == 0) and (sum(y_max_sample) == 0):
+        # corners are white
+        if img[lt - 1][bar.x_min - 1] != 255:
+            continue
+        if img[rt - 1][bar.x_max + 1] != 255:
+            continue
+        if img[lb + 1][bar.x_max - 1] != 255:
+            continue
+        if img[rb + 1][bar.x_max + 1] != 255:
+            continue
+        
+        if resized[bar.x_min - 1] < 50:
+            continue
+        if resized[bar.x_max + 1] < 50:
             continue
 
         bars.append(bar)
 
     return bars
 
-def vertical_section(img: cv2.Mat) -> list[Label]:
-    staffs = get_staffs(img)
+def vertical_section(img: cv2.Mat, staffs: list[Staff] = None) -> list[Label]:
+    if staffs == None:
+        staffs = get_staffs(img)
+
     # split image vertically based on staffs
     width = img.shape[1]
     height = img.shape[0]
@@ -133,17 +152,16 @@ def vertical_section(img: cv2.Mat) -> list[Label]:
 import math
 
 def section(img: cv2.Mat) -> list[Label]:
-    width = img.shape[1]
-    height = img.shape[0]
+    img = cv2.threshold(img.copy(), 250, 255, cv2.THRESH_BINARY)[1]
 
-    vertial_sections = vertical_section(img)
     staffs = get_staffs(img)
+    vertial_sections = vertical_section(img, staffs)
 
     sections = []
 
     for section in vertial_sections:
         section_staffs = []
-        section_bars = []
+        section_bars: list[Label] = []
         for staff in staffs:
             if section.intersects(staff):
                 section_staffs.append(staff)
@@ -157,8 +175,8 @@ def section(img: cv2.Mat) -> list[Label]:
                     else:
                         section_bars.append(bar)
 
-        for x_min, x_max in zip([Bbox([0, 0, 0, 0])] + section_bars, section_bars + [Bbox([width, 0, width, 0])]):
-            sections.append(Label([x_min.x_max, section.y_min, x_max.x_min, section.y_max], "section"))
+        for left, right in zip(section_bars[:-1], section_bars[1:]):
+            sections.append(Label([left.x_max, section.y_min, right.x_min, section.y_max], "section"))
 
     return sections
 
