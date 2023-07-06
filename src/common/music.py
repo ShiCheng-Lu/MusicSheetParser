@@ -66,6 +66,13 @@ TONE_MAP = [
 ]
 
 class Note(Label):
+    '''
+    Note:
+    - duration: float, in fractions of a full note
+    - pitch: int, relative to A4
+    - start: float, start time since start of the bar, in fractions of a full note
+    - modifier: int, modifier directly on the note, +1/-1 for sharp or flat, 0 for natural, None for no modifier (follows bar's modifiers)
+    '''
     def __init__(self, bbox=None, name=None):
         super().__init__(bbox, name)
         self.duration: float = 0
@@ -130,6 +137,10 @@ class Note(Label):
 
 
 class Bar(Label):
+    '''
+    Bar: contains notes in the par
+    - notes: notes of the bar
+    '''
     def __init__(self, bbox=None, name=None):
         super().__init__(bbox, name)
         self.parent_staff: Staff = None
@@ -155,6 +166,12 @@ class Bar(Label):
         return self
 
 class Staff(Label):
+    '''
+    Staff:
+    - keys: a list of sharp/flat modifiers for each pitch on the scale (0 to 7)
+    - clef: the clef of the staff, (Treble/Bass/etc.)
+    - bars: bars in the clef
+    '''
     def __init__(self, bbox=None, name=None):
         super().__init__(bbox, name)
         self.keys: list[int] = [0 for _ in range(7)]
@@ -187,6 +204,13 @@ class Staff(Label):
         return self
 
 class Music:
+    '''
+    Music
+    - staffs: contain a list of staffs of the music in order
+    - group: the number of staffs that should be player at the same time
+    - bpm: how many beats per minute the music plays at
+    - time_sig: the time signature, defines how long a beat is and how many beats in a bar. e.g. [4, 4]
+    '''
     def __init__(self):
         self.staffs: list[Staff] = []
         self.group: int = None

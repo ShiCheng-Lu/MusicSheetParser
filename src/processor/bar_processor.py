@@ -16,6 +16,9 @@ class BarProcessor(Bar):
             self.parent_staff.clef = Label([0, 0, 0, 0], "clefF")
     
     def process(self):
+        '''
+        process a bar by getting notes in the bar and applying modifiers to notes.
+        '''
         self.labels.sort(key=lambda x: x.x_min)
 
         mods: list[Label] = []
