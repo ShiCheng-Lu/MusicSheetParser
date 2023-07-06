@@ -13,6 +13,11 @@ detector.load("best_model.pt")
 
 
 class SectionProcessor:
+    '''
+    SectionProcessor
+
+    a section is a group of bars that should be played at the same time.
+    '''
     def __init__(self, section: Bbox, staffs: list[Staff], parent):
         self.section = section
         self.bars: list[BarProcessor] = []
@@ -39,6 +44,9 @@ class SectionProcessor:
         staffs[-1].bars.append(bar_processor)
 
     def process(self):
+        '''
+        process a section
+        '''
         section = self.parent.image[self.section.y_min:self.section.y_max,
                                     self.section.x_min:self.section.x_max]
         # object detect
