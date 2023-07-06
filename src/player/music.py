@@ -3,6 +3,9 @@ import time
 import threading
 
 class MusicPlayer:
+    '''
+    MusicPlayer: base class
+    '''
     def __init__(self, bpm=None):
         self.bpm = 80
 
@@ -20,6 +23,9 @@ class Note(common.music.Note):
         note.copy(self)
     
     def play(self, player: MusicPlayer):
+        '''
+        play the note with the player
+        '''
         if 'rest' not in self.name:
             player.play(self.semitone, self.duration)
         return self.duration
@@ -37,6 +43,12 @@ class Bar(common.music.Bar):
         self.next_note_time = 0
 
     def play(self, delta, player):
+        '''
+        play a section of the bar with the player
+
+        returns how long the bar played for, then the caller should wait that time then call play again to play the next notes.
+        returns 0 if there are no more notes to play
+        '''
         if self.current_note == None:
             return 0
         # self.next_note_time -= delta

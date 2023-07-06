@@ -18,6 +18,9 @@ class Bar(common.music.Bar):
         self.validate()
 
     def validate(self):
+        '''
+        validate if this bar has correct duration 
+        '''
         duration = 0
         target_duration = self.parent_staff.parent_music.time_sig_duration
 

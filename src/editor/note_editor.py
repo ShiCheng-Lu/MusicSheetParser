@@ -33,6 +33,9 @@ class Note(common.music.Note):
         self.parent_bar = parent_bar
 
     def render(self, screen, selected):
+        '''
+        renders the note on screen
+        '''
         thickness = 5
 
         text = font.render(self.pitch_str, True, (25, 25, 255))
@@ -51,6 +54,9 @@ class Note(common.music.Note):
         screen.blit(text, textRect)
 
     def update(self, duration, pitch, modifier):
+        '''
+        update the note to have new duration, pitch, and modifier
+        '''
         self.duration: float = duration
         self.pitch: int = pitch
         self.modifier = modifier
