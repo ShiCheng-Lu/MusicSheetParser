@@ -7,4 +7,4 @@ parser:
 2. use FasterRCNN image object detection on each bar
 3. process labels by their BBoxes and extract individual note pitches and durations
 
-![sample](./sample.png)
+![sample](sample.png)
