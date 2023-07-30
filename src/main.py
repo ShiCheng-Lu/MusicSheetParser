@@ -7,9 +7,9 @@ import common.music
 import json
 
 # file = "sheets/bohemia rhapsody.png"
-file = "sheets/genshin main theme.png"
+# file = "sheets/genshin main theme.png"
 # file = "sheets/imagine john lennon.png"
-# file = "sheets/never gonna give you up.png"
+file = "sheets/never gonna give you up.png"
 
 from processor.music_processor import MusicParser
 parser = MusicParser(file)
