@@ -8,8 +8,8 @@ import json
 
 with open(f"category.json") as f:
     categories = json.load(f)
-detector = MusicSymbolDetector()
-detector.load("best_model.pt")
+# detector = MusicSymbolDetector()
+# detector.load("best_model.pt")
 
 
 class SectionProcessor:
@@ -18,11 +18,13 @@ class SectionProcessor:
 
     a section is a group of bars that should be played at the same time.
     '''
+
     def __init__(self, section: Bbox, staffs: list[Staff], parent):
         self.section = section
         self.bars: list[BarProcessor] = []
         self.parent = parent
         self.staff_height = staffs[0].height
+        self.detector = None
 
         # split the section into bars by staffs
         cutoff = self.section.y_min
@@ -50,13 +52,13 @@ class SectionProcessor:
         section = self.parent.image[self.section.y_min:self.section.y_max,
                                     self.section.x_min:self.section.x_max]
         # object detect
-        labels = detector(section)
+        labels = self.detector(section)
 
         time_sig = []
         for label in labels:
             label.name = categories[str(label.name)]["name"]
 
-            # weird beams
+            # frequently, it detects very large beams, (not really beams, ignore these)
             if label.name == "beam" and label.height >= self.staff_height:
                 continue
             if 'timeSig' in label.name:

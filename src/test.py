@@ -5,7 +5,7 @@ from torchvision.utils import draw_bounding_boxes
 import json
 
 def test_staff_utils():
-    img = cv2.imread("sheets/bohemia rhapsody.png", cv2.IMREAD_GRAYSCALE)
+    img = cv2.imread("ds2_dense/images/lg-69678954220027474-aug-beethoven--page-176.png", cv2.IMREAD_GRAYSCALE)
     cv2.threshold(img, 250, 255, cv2.THRESH_BINARY, img)
     width = img.shape[1]
     bars = section(img)
@@ -22,6 +22,10 @@ def test_staff_utils():
 
     # end = time.time()
     # print(f"Process time: {end - start}")
+
+    sections = section(img)
+    boxes += [section.bbox for section in sections]
+    labels += ["sec"] * len(sections)
 
 
     plt.imshow(draw_bounding_boxes(torch.tensor(img).unsqueeze(0), torch.tensor(boxes), labels).moveaxis(0, 2))
@@ -60,4 +64,5 @@ def test_staff_utils():
 #     with open(f"test3.json", 'w') as f:
 #         f.write(json.dumps(parser.to_dict()))
 
-test_staff_utils()
+if __name__ == "__main__":
+    test_staff_utils()

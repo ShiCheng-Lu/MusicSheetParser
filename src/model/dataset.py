@@ -79,19 +79,6 @@ class MusicSheetDataSet(datasets.VisionDataset):
 
         self.sampling_sections = self.sections
 
-
-    def section(self, data):
-        sections = []
-        image = self._load_image(data)
-        try:
-            for section in processor.staff_utils.section(image):
-                section.name = data
-                sections.append(section)
-        except:
-            pass
-            # print(f"Failed to process {data['filename']}")
-        return sections
-
     def n_classes(self):
         return sum(cat['annotation_set'] == 'deepscores' for cat in self.data['categories'].values())
 
@@ -99,21 +86,21 @@ class MusicSheetDataSet(datasets.VisionDataset):
         path = image['filename']
         return cv2.imread(os.path.join(self.root, 'images', path), cv2.IMREAD_GRAYSCALE)
 
-    def _load_target(self, image):
+    def _load_labels(self, image):
         anno_ids = image['ann_ids']
         return [self.data['annotations'][id] for id in anno_ids]
 
     def __getitem__(self, index):
         image = self._load_image(self.sampling_sections[index].name)
-        target = self._load_target(self.sampling_sections[index].name)
+        labels = self._load_labels(self.sampling_sections[index].name)
 
-        return crop(image, target, self.sections[index], self)
+        return crop(image, labels, self.sections[index], self)
 
     def showLabels(self, index):
-        image, targets = self[index]
+        image, labels = self[index]
 
         plt.imshow(utils.draw_bounding_boxes(
-            image.mul(255).type(torch.uint8), targets['boxes'], width=4
+            image.mul(255).type(torch.uint8), labels['boxes'], width=4
         ).moveaxis(0, 2))
 
     def __len__(self):

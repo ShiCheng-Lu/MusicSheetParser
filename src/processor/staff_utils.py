@@ -89,10 +89,10 @@ def get_bars(img: cv2.Mat, staff: Staff, avoid: list[Label]=[], label_name="bar"
             rb += 1
         
         # ends flat
-        if lt != rt or lb != rb:
+        if abs(lt - rt) > 1 or abs(lb - rb) > 1:
             continue
         
-        # corners are white
+        # # corners are white
         if img[lt - 1][bar.x_min - 1] != 255:
             continue
         if img[rt - 1][bar.x_max + 1] != 255:
@@ -140,7 +140,7 @@ def vertical_section(img: cv2.Mat, staffs: list[Staff] = None) -> list[Label]:
 
     # remove rows that are not over the brightness cuffoff
     for cutoff in cutoffs:
-        if resized[cutoff] < 254:
+        if resized[cutoff] < 254 and cutoff > staffs[0].y_min and cutoff < staffs[-1].y_max:
             cutoffs.remove(cutoff)
 
     labels = []

@@ -91,7 +91,7 @@ class MusicSymbolDetector:
             all_losses_dict = {}
 
             dataloader = DataLoader(
-                dataset.random(10000),
+                dataset.random(data_count),
                 collate_fn=lambda x : zip(*x),
                 shuffle = True
             )
